@@ -9,7 +9,25 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: 'Poppins', sans-serif; overflow: hidden; background-color: #f8fafc; }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            overflow: hidden; 
+            background-color: #ffffff; /* خلفية بيضاء لتكوين الهيدر والفوتر */
+            height: 100vh; /* احتياطي للمتصفحات القديمة */
+            height: 100dvh; /* يتكيف تلقائياً مع شريط المتصفح الديناميكي */
+            display: flex;
+            flex-direction: column;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            box-sizing: border-box;
+        }
+        /* دعم الـ Safe Area للآيفون والأجهزة الحديثة */
+        @supports (padding-top: env(safe-area-inset-top)) {
+            body {
+                padding-top: calc(env(safe-area-inset-top) + 10px);
+                padding-bottom: calc(env(safe-area-inset-bottom) + 10px);
+            }
+        }
         
         /* Menu Styles */
         .menu-item { transition: all 0.2s; position: relative; }
@@ -84,7 +102,7 @@
         @keyframes drift { from { transform: translateY(100vh) rotate(0deg); } to { transform: translateY(-20vh) rotate(360deg); } }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900">
+<body class="text-slate-900 px-0 sm:px-2"> <!-- تم إزالة bg-slate-50 لأن الـ body أصبح أبيض -->
 
     <!-- Global Loader -->
     <div id="globalLoader" class="fixed inset-0 loader-overlay flex items-start justify-center pt-24 sm:pt-32 z-[100000]">
@@ -134,8 +152,8 @@
     </div>
 
     <!-- NEW: Public Landing & Login Page Container -->
-    <div id="loginPage" class="hidden h-screen w-full flex flex-col items-center justify-start bg-animated relative overflow-hidden">
-        <div id="background-elements" class="fixed inset-0 z-0 pointer-events-none"></div>
+    <div id="loginPage" class="hidden flex-1 w-full flex flex-col items-center justify-start bg-animated relative overflow-hidden sm:rounded-[2rem] rounded-xl shadow-2xl ring-1 ring-slate-200">
+        <div id="background-elements" class="absolute inset-0 z-0 pointer-events-none"></div>
         
         <!-- Header for Public Area -->
         <div class="w-full relative z-20 flex justify-between items-center p-4 sm:px-8 bg-white/5 backdrop-blur-sm border-b border-white/10 shadow-lg">
@@ -211,7 +229,7 @@
     </div>
 
     <!-- Main Dashboard -->
-    <div id="dashboard" class="hidden h-screen w-full flex flex-col overflow-hidden">
+    <div id="dashboard" class="hidden flex-1 w-full flex flex-col overflow-hidden bg-slate-50 sm:rounded-[2rem] rounded-xl shadow-2xl ring-1 ring-slate-200 relative">
         <header class="h-16 bg-white border-b flex items-center justify-between px-4 shrink-0 z-[60] shadow-sm">
             <div class="flex items-center gap-4 relative">
                 <button onclick="toggleMenu()" class="w-11 h-11 flex items-center justify-center rounded-2xl btn-animated-menu shadow-lg">
@@ -258,7 +276,7 @@
             </div>
         </header>
 
-        <div id="menuOverlay" class="hidden fixed inset-0 bg-slate-900/10 backdrop-blur-[2px]" onclick="closeMenu()"></div>
+        <div id="menuOverlay" class="hidden absolute inset-0 bg-slate-900/10 backdrop-blur-[2px] z-[55]" onclick="closeMenu()"></div>
 
         <main class="flex-1 relative overflow-hidden bg-slate-50">
             <!-- Modern Welcome Screen -->
@@ -383,9 +401,9 @@
         let activeItems = { 1: null, 2: null };
         let isLoginFormOpen = false;
 
-        // ??????? ??????? ???????? ?????????
+        // متغيرات التحديث التلقائي للإشعارات
         let pollingIntervalId = null;
-        const POLLING_RATE = 10000; // ????? ???? ?? 10 ?????
+        const POLLING_RATE = 10000; // تحديث صامت كل 10 ثواني
 
         async function getDeviceSignature() {
             const getCanvasSignature = () => {
@@ -521,7 +539,7 @@
             renderDashboardWidget(); 
             showLoader(false);
 
-            // ??? ???? ??????? ???????? ????? ??????
+            // بدء نظام التحديث التلقائي بمجرد الدخول
             startSilentPolling();
         }
 
@@ -585,7 +603,7 @@
                             const newHeight = Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight);
                             frame.style.height = newHeight + 'px';
                         } catch (e) {
-                            console.warn("???? ???? ???????? ???????.");
+                            console.warn("تعذر حساب الارتفاع الداخلي.");
                         }
                     };
                     adjustHeight();
@@ -675,7 +693,7 @@
             document.title = "EDU-Z - Dynamic Device Auth";
             document.getElementById('activePageTitle').textContent = "EDU-Z"; 
             
-            // ????? ??????? ???????? ??? ????? ??????
+            // إيقاف التحديث التلقائي عند تسجيل الخروج
             stopSilentPolling();
             
             try {
@@ -799,7 +817,7 @@
         function renderMenu() {
             const container = document.getElementById('menuContainer');
             
-            // ??? ???? ??????? ???????? ?????? ??? ?? ????? ??? ??????? ????????
+            // حفظ حالة القوائم المفتوحة حالياً حتى لا تنغلق عند التحديث التلقائي
             const openMenus = Array.from(container.querySelectorAll('.submenu-container.open')).map(el => el.id);
 
             container.innerHTML = '';
@@ -884,7 +902,7 @@
             });
             lucide.createIcons();
 
-            // ??????? ???? ??????? ????????
+            // استعادة حالة القوائم المفتوحة
             openMenus.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
@@ -919,7 +937,7 @@
             } finally { showLoader(false); closeModal(); }
         }
 
-        // --- ???? ??????? ???????? (Silent Polling) ??????? ????????? ---
+        // --- دوال التحديث التلقائي (Silent Polling) الصامتة للإشعارات ---
         async function silentRefreshData() {
             if (!currentUser) return;
             try {
@@ -930,7 +948,7 @@
                     const updatedUser = r.users.find(u => u.username === currentUser.username);
 
                     if (updatedUser) {
-                        // ?????? ?? ???? ?????? ???? ?? ????? ??????????
+                        // التحقق هل هناك اختلاف فعلي في أرقام الإشعارات؟
                         const countsChanged = 
                             currentUser.unread10 !== updatedUser.unread10 ||
                             currentUser.unread20 !== updatedUser.unread20 ||
@@ -940,10 +958,10 @@
 
                         currentUser = updatedUser;
 
-                        // ??? ??? ???? ??????? ??? ????? ????????? ????????
+                        // إذا كان هناك اختلاف، يتم تحديث الأيقونات والقوائم
                         if (countsChanged) {
                             renderMenu();
-                            // ????? ?????? ???????? ??? ??? ???????? ??? ?????
+                            // تحديث الشاشة الرئيسية إذا كان المستخدم يقف عليها
                             if (!document.getElementById('welcomeScreen').classList.contains('hidden')) {
                                 renderAppWall(document.getElementById('currentCategoryText').textContent || null);
                             }
