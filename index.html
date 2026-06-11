@@ -152,20 +152,30 @@
     </div>
 
     <!-- NEW: Public Landing & Login Page Container -->
-    <div id="loginPage" class="hidden flex-1 w-full flex flex-col items-center justify-start bg-animated relative overflow-hidden sm:rounded-[2rem] rounded-xl shadow-2xl ring-1 ring-slate-200">
-        <div id="background-elements" class="absolute inset-0 z-0 pointer-events-none"></div>
+    <div id="loginPage" class="hidden h-screen w-full flex flex-col items-center justify-start bg-animated relative overflow-hidden">
+        <div id="background-elements" class="fixed inset-0 z-0 pointer-events-none"></div>
         
         <!-- Header for Public Area -->
-        <div class="w-full relative z-20 flex justify-between items-center p-4 sm:px-8 bg-white/5 backdrop-blur-sm border-b border-white/10 shadow-lg">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg">
-                    <i data-lucide="graduation-cap" class="text-white w-6 h-6"></i>
+        <div class="w-full relative z-20 flex items-center justify-between p-4 sm:px-8 bg-white/5 backdrop-blur-sm border-b border-white/10 shadow-lg min-h-[72px]">
+            
+            <!-- Left Side: Logo Wrapper -->
+            <div class="flex items-center">
+                <div id="publicEduzLogo" class="flex items-center gap-3 transition-opacity duration-300">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg">
+                        <i data-lucide="graduation-cap" class="text-white w-5 h-5 sm:w-6 sm:h-6"></i>
+                    </div>
+                    <h1 class="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-200 tracking-wider hidden sm:block">EDU-Z</h1>
                 </div>
-                <h1 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-200 tracking-wider">EDU-Z</h1>
             </div>
-            <button onclick="toggleLoginForm()" id="showLoginBtn" class="group bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 border border-blue-400/30 text-white px-6 py-2.5 rounded-2xl text-sm font-black transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)] flex items-center gap-2 active:scale-95">
-                <i data-lucide="user-circle" class="w-5 h-5 text-cyan-300 group-hover:scale-110 transition-transform"></i> Login
-            </button>
+
+            <!-- Right Side: Login -->
+            <div class="flex items-center">
+                <!-- Login Button -->
+                <button onclick="toggleLoginForm()" id="showLoginBtn" class="group bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 border border-blue-400/30 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-black transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)] flex items-center gap-1.5 sm:gap-2 active:scale-95 ml-auto">
+                    <i data-lucide="user-circle" class="w-4 h-4 sm:w-5 sm:h-5 text-cyan-300 group-hover:scale-110 transition-transform"></i> 
+                    <span class="hidden md:inline">Login</span>
+                </button>
+            </div>
         </div>
 
         <!-- Area for Page 00 (Public Landing Page) -->
@@ -481,12 +491,15 @@
         function renderPublicLandingPage() {
             if (!systemDataCache || !systemDataCache.menu) return;
             const landingItem = systemDataCache.menu.find(item => String(item.order) === "00");
+            const publicLogo = document.getElementById('publicEduzLogo');
             
             if (landingItem) {
                 const iframe = document.getElementById('landingIframe');
                 const blob = new Blob([landingItem.code], { type: 'text/html' });
                 iframe.src = URL.createObjectURL(blob);
+                if (publicLogo) publicLogo.classList.add('hidden'); // إخفاء اللوجو لو صفحة 00 موجودة
             } else {
+                if (publicLogo) publicLogo.classList.remove('hidden'); // إظهار اللوجو لو مفيش صفحة 00
                 toggleLoginForm(true);
             }
         }
