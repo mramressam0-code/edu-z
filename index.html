@@ -399,7 +399,7 @@
     </div>
 
     <script>
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbykiPnszqHe29JpM2pTO9B2s571eyCXYFeu5rxfDifXMXLAsptprmloB2jbLFws7tbA/exec";
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyWtwuL3JKKggXCASs73hzAQX0rdf7SI_f4Alyo8clnCRMgS2fP-Oz9oGsLNgnvgq15/exec";
         const DEMO_VIDEO_DRIVE_ID = "1KZBVGd7bjmqqBTls3YX1CG0_hUhtqtrN";
         
         let currentUser = null;
@@ -669,6 +669,11 @@
                 currentUser.unread30 = 0;
                 shouldUpdate = true;
             }
+            if (ordersToClear.includes("31") && currentUser.unread31 > 0) {
+                fetch(`${APPS_SCRIPT_URL}?action=markAsSeen&username=${encodeURIComponent(currentUser.username)}&targetOrder=31`);
+                currentUser.unread31 = 0;
+                shouldUpdate = true;
+            }
 
             if (shouldUpdate) {
                 renderMenu();
@@ -801,6 +806,7 @@
                 if (String(item.order) === "25") badgeCount = currentUser.unread25 || 0;
                 if (String(item.order) === "29") badgeCount = currentUser.unread29 || 0;
                 if (String(item.order) === "30") badgeCount = currentUser.unread30 || 0;
+                if (String(item.order) === "31") badgeCount = currentUser.unread31 || 0;
             }
 
             if (badgeCount > 0) {
@@ -863,6 +869,7 @@
                     if (String(m.order) === "25" || sub.some(s => String(s.order) === "25")) parentBadgeCount += (currentUser.unread25 || 0);
                     if (String(m.order) === "29" || sub.some(s => String(s.order) === "29")) parentBadgeCount += (currentUser.unread29 || 0);
                     if (String(m.order) === "30" || sub.some(s => String(s.order) === "30")) parentBadgeCount += (currentUser.unread30 || 0);
+                    if (String(m.order) === "31" || sub.some(s => String(s.order) === "31")) parentBadgeCount += (currentUser.unread31 || 0);
                 }
                 
                 let parentBadgeHtml = '';
@@ -891,6 +898,7 @@
                                     if (String(s.order) === "25") childBadgeCount = currentUser.unread25 || 0;
                                     if (String(s.order) === "29") childBadgeCount = currentUser.unread29 || 0;
                                     if (String(s.order) === "30") childBadgeCount = currentUser.unread30 || 0;
+                                    if (String(s.order) === "31") childBadgeCount = currentUser.unread31 || 0;
                                 }
                                 let childBadgeHtml = '';
                                 if (childBadgeCount > 0) {
@@ -967,7 +975,8 @@
                             currentUser.unread20 !== updatedUser.unread20 ||
                             currentUser.unread25 !== updatedUser.unread25 ||
                             currentUser.unread29 !== updatedUser.unread29 ||
-                            currentUser.unread30 !== updatedUser.unread30;
+                            currentUser.unread30 !== updatedUser.unread30 ||
+                            currentUser.unread31 !== updatedUser.unread31;
 
                         currentUser = updatedUser;
 
