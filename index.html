@@ -12,16 +12,15 @@
         body { 
             font-family: 'Poppins', sans-serif; 
             overflow: hidden; 
-            background-color: #ffffff; /* خلفية بيضاء لتكوين الهيدر والفوتر */
-            height: 100vh; /* احتياطي للمتصفحات القديمة */
-            height: 100dvh; /* يتكيف تلقائياً مع شريط المتصفح الديناميكي */
+            background-color: #ffffff; 
+            height: 100vh; 
+            height: 100dvh; 
             display: flex;
             flex-direction: column;
             padding-top: 10px;
             padding-bottom: 10px;
             box-sizing: border-box;
         }
-        /* دعم الـ Safe Area للآيفون والأجهزة الحديثة */
         @supports (padding-top: env(safe-area-inset-top)) {
             body {
                 padding-top: calc(env(safe-area-inset-top) + 10px);
@@ -29,7 +28,6 @@
             }
         }
         
-        /* Menu Styles */
         .menu-item { transition: all 0.2s; position: relative; }
         .menu-item.active { background-color: #eff6ff; color: #2563eb; border-left: 3px solid #2563eb; }
         .submenu-container { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-in-out; background-color: #f8fafc; border-radius: 0.5rem; margin: 0 0.25rem; }
@@ -40,7 +38,6 @@
         #menuOverlay { transition: opacity 0.2s; z-index: 55; }
         .loader-overlay { background: #f8fafc; z-index: 100000; transition: opacity 0.3s ease; }
         
-        /* Modern App Icon Effects */
         .app-icon-wrapper {
             transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
             position: relative;
@@ -102,17 +99,23 @@
         @keyframes drift { from { transform: translateY(100vh) rotate(0deg); } to { transform: translateY(-20vh) rotate(360deg); } }
     </style>
 </head>
-<body class="text-slate-900 px-0 sm:px-2"> <!-- تم إزالة bg-slate-50 لأن الـ body أصبح أبيض -->
+<body class="text-slate-900 px-0 sm:px-2">
 
     <!-- Global Loader -->
-    <div id="globalLoader" class="fixed inset-0 loader-overlay flex items-start justify-center pt-24 sm:pt-32 z-[100000]">
-        <div class="flex flex-col items-center">
-            <div class="relative w-24 h-24 flex items-center justify-center mb-5">
-                <div class="absolute inset-0 border-4 border-slate-200 rounded-full"></div>
-                <div class="absolute inset-0 border-4 border-blue-600 border-t-transparent border-l-transparent rounded-full animate-spin"></div>
-                <i data-lucide="graduation-cap" class="w-8 h-8 text-blue-600 absolute animate-pulse"></i>
-            </div>
-            <span id="loaderText" class="text-blue-600 font-black text-sm tracking-[0.3em] animate-pulse uppercase">EDU-Z Checking Session</span>
+    <div id="globalLoader" class="fixed inset-0 loader-overlay flex items-center justify-center flex-col z-[100000] bg-[#f8fafc]">
+        <div class="relative w-24 h-24 flex items-center justify-center mb-6">
+            <div class="absolute inset-0 border-4 border-slate-200 rounded-full"></div>
+            <div class="absolute inset-0 border-4 border-blue-600 border-t-transparent border-l-transparent rounded-full animate-spin"></div>
+            <i data-lucide="graduation-cap" class="w-8 h-8 text-blue-600 absolute animate-pulse"></i>
+        </div>
+        
+        <!-- Status Text (e.g. Checking Session) -->
+        <span id="loaderText" class="text-slate-400 font-bold text-[10px] tracking-[0.3em] uppercase mb-4">EDU-Z Checking Session</span>
+        
+        <!-- Animated Typewriter Text -->
+        <div class="h-8 sm:h-10 flex items-center justify-center px-4">
+            <span id="typewriterText" class="text-blue-600 font-black text-base sm:text-xl text-center drop-shadow-sm"></span>
+            <span class="text-blue-600 font-light text-xl sm:text-2xl animate-[pulse_0.8s_infinite] ml-1 -translate-y-0.5">|</span>
         </div>
     </div>
 
@@ -156,9 +159,8 @@
         <div id="background-elements" class="fixed inset-0 z-0 pointer-events-none"></div>
         
         <!-- Header for Public Area -->
-        <div class="w-full relative z-20 flex items-center justify-between p-4 sm:px-8 bg-white/5 backdrop-blur-sm border-b border-white/10 shadow-lg min-h-[72px]">
+        <div id="publicHeader" class="w-full absolute top-0 left-0 z-50 flex items-center justify-between p-4 sm:px-8 bg-white/10 backdrop-blur-md border-b border-white/20 shadow-lg min-h-[72px] transition-transform duration-500">
             
-            <!-- Left Side: Logo Wrapper -->
             <div class="flex items-center">
                 <div id="publicEduzLogo" class="flex items-center gap-3 transition-opacity duration-300">
                     <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg">
@@ -168,10 +170,9 @@
                 </div>
             </div>
 
-            <!-- Right Side: Login -->
             <div class="flex items-center">
                 <!-- Login Button -->
-                <button onclick="toggleLoginForm()" id="showLoginBtn" class="group bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 border border-blue-400/30 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-black transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)] flex items-center gap-1.5 sm:gap-2 active:scale-95 ml-auto">
+                <button onclick="toggleLoginForm()" id="showLoginBtn" class="group bg-white/10 hover:bg-white/20 backdrop-blur-lg border border-white/30 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-black transition-all shadow-[0_8px_32px_rgba(255,255,255,0.1)] flex items-center gap-1.5 sm:gap-2 active:scale-95 ml-auto">
                     <i data-lucide="user-circle" class="w-4 h-4 sm:w-5 sm:h-5 text-cyan-300 group-hover:scale-110 transition-transform"></i> 
                     <span>Login</span>
                 </button>
@@ -179,7 +180,7 @@
         </div>
 
         <!-- Area for Page 00 (Public Landing Page) -->
-        <div id="publicLandingArea" class="flex-1 w-full relative z-10 transition-all duration-700 ease-in-out">
+        <div id="publicLandingArea" class="w-full h-full absolute inset-0 z-10 transition-all duration-700 ease-in-out">
             <iframe id="landingIframe" class="w-full h-full absolute inset-0 border-none bg-transparent"></iframe>
         </div>
 
@@ -348,7 +349,6 @@
 
                     <!-- Dashboard Widget Section (Page 0) -->
                     <div id="dashboardWidgetSection" class="mt-16 hidden fade-in-up transition-all duration-500 w-full relative">
-                        <!-- Elegant Divider and Title for the Separate Section -->
                         <div class="flex items-center gap-4 mb-8">
                             <div class="h-px bg-slate-300 flex-1"></div>
                             <div class="flex items-center gap-3 px-5 py-2.5 bg-white rounded-2xl shadow-md border border-slate-200 z-10">
@@ -362,7 +362,6 @@
                             <div class="h-px bg-slate-300 flex-1"></div>
                         </div>
                         
-                        <!-- Iframe Container -->
                         <div class="bg-white rounded-[2rem] shadow-2xl shadow-slate-200/60 border border-slate-200 overflow-hidden relative w-full p-1 group transition-all duration-500">
                             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 z-10"></div>
                             <div class="w-full rounded-[1.8rem] overflow-hidden relative">
@@ -399,7 +398,14 @@
     </div>
 
     <script>
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyWtwuL3JKKggXCASs73hzAQX0rdf7SI_f4Alyo8clnCRMgS2fP-Oz9oGsLNgnvgq15/exec";
+        // إيقاف إشعارات ResizeObserver الحميدة في المتصفح لتنظيف الكونسول
+        window.addEventListener('error', e => {
+            if (e.message && (e.message.includes('ResizeObserver loop') || e.message.includes('undelivered notifications'))) {
+                e.stopImmediatePropagation();
+            }
+        });
+
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz4e7Hm2aDKaXUEkUUGpY_x_7qUWv-wXonIhmjiSphKlnhSRqKB6KYnqYvVD3W9RDC5/exec";
         const DEMO_VIDEO_DRIVE_ID = "1KZBVGd7bjmqqBTls3YX1CG0_hUhtqtrN";
         
         let currentUser = null;
@@ -411,9 +417,50 @@
         let activeItems = { 1: null, 2: null };
         let isLoginFormOpen = false;
 
-        // متغيرات التحديث التلقائي للإشعارات
         let pollingIntervalId = null;
-        const POLLING_RATE = 10000; // تحديث صامت كل 10 ثواني
+        const POLLING_RATE = 10000; 
+
+        // --- إعدادات اللودر المتحرك (Typewriter Effect) ---
+        const LOADER_PHRASES = [
+            "Welcome to Inspire Language School",
+            "We don't just teach",
+            "We inspire",
+            "Hope you will enjoy your journey"
+        ];
+        let typeTimeout;
+        let isTyping = false;
+        let phraseIdx = 0;
+        let charIdx = 0;
+        let isDeletingPhrase = false;
+
+        function runTypewriter() {
+            const textElement = document.getElementById('typewriterText');
+            if (!textElement || !isTyping) return;
+
+            const currentPhrase = LOADER_PHRASES[phraseIdx];
+            
+            if (isDeletingPhrase) {
+                textElement.textContent = currentPhrase.substring(0, charIdx - 1);
+                charIdx--;
+            } else {
+                textElement.textContent = currentPhrase.substring(0, charIdx + 1);
+                charIdx++;
+            }
+
+            let typeSpeed = isDeletingPhrase ? 30 : 60; 
+
+            if (!isDeletingPhrase && charIdx === currentPhrase.length) {
+                typeSpeed = 1500; 
+                isDeletingPhrase = true;
+            } else if (isDeletingPhrase && charIdx === 0) {
+                isDeletingPhrase = false;
+                phraseIdx = (phraseIdx + 1) % LOADER_PHRASES.length;
+                typeSpeed = 300; 
+            }
+
+            typeTimeout = setTimeout(runTypewriter, typeSpeed);
+        }
+        // --------------------------------------------------
 
         async function getDeviceSignature() {
             const getCanvasSignature = () => {
@@ -492,14 +539,34 @@
             if (!systemDataCache || !systemDataCache.menu) return;
             const landingItem = systemDataCache.menu.find(item => String(item.order) === "00");
             const publicLogo = document.getElementById('publicEduzLogo');
+            const iframe = document.getElementById('landingIframe');
+            const publicHeader = document.getElementById('publicHeader');
             
             if (landingItem) {
-                const iframe = document.getElementById('landingIframe');
                 const blob = new Blob([landingItem.code], { type: 'text/html' });
                 iframe.src = URL.createObjectURL(blob);
-                if (publicLogo) publicLogo.classList.add('hidden'); // إخفاء اللوجو لو صفحة 00 موجودة
+                if (publicLogo) publicLogo.classList.add('hidden'); 
+                
+                iframe.onload = () => {
+                    try {
+                        const iframeWin = iframe.contentWindow;
+                        let lastScrollY = iframeWin.scrollY;
+                        
+                        iframeWin.addEventListener('scroll', () => {
+                            const currentScrollY = iframeWin.scrollY;
+                            if (currentScrollY > lastScrollY && currentScrollY > 50) {
+                                publicHeader.style.transform = 'translateY(-100%)';
+                            } else {
+                                publicHeader.style.transform = 'translateY(0)';
+                            }
+                            lastScrollY = currentScrollY;
+                        });
+                    } catch(e) {
+                        console.warn("Could not attach scroll listener to iframe", e);
+                    }
+                };
             } else {
-                if (publicLogo) publicLogo.classList.remove('hidden'); // إظهار اللوجو لو مفيش صفحة 00
+                if (publicLogo) publicLogo.classList.remove('hidden'); 
                 toggleLoginForm(true);
             }
         }
@@ -527,9 +594,22 @@
             if (show) {
                 loader.classList.remove('hidden');
                 loader.style.opacity = '1';
+                
+                if (!isTyping) {
+                    isTyping = true;
+                    phraseIdx = 0;
+                    charIdx = 0;
+                    isDeletingPhrase = false;
+                    document.getElementById('typewriterText').textContent = "";
+                    runTypewriter();
+                }
             } else {
                 loader.style.opacity = '0';
-                setTimeout(() => loader.classList.add('hidden'), 300);
+                setTimeout(() => {
+                    loader.classList.add('hidden');
+                    isTyping = false;
+                    clearTimeout(typeTimeout);
+                }, 300);
             }
         }
 
@@ -552,7 +632,6 @@
             renderDashboardWidget(); 
             showLoader(false);
 
-            // بدء نظام التحديث التلقائي بمجرد الدخول
             startSilentPolling();
         }
 
@@ -565,23 +644,25 @@
                 const u = document.getElementById('username').value;
                 const p = document.getElementById('password').value;
                 const d = await getDeviceSignature();
-                const res = await (await fetch(`${APPS_SCRIPT_URL}?action=attemptLogin&username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}&deviceId=${encodeURIComponent(d)}`)).json();
+                
+                const res = await (await fetch(`${APPS_SCRIPT_URL}?action=fastLogin&username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}&deviceId=${encodeURIComponent(d)}`)).json();
                 
                 if (res.status === "success") {
-                    const data = await (await fetch(`${APPS_SCRIPT_URL}?action=getAllData`)).json();
-                    systemDataCache = data;
-                    currentUser = data.users.find(usr => usr.username === u && usr.password === p);
-                    menuData = data.menu;
-                    await fetch(`${APPS_SCRIPT_URL}?action=saveLoginState&schoolName=${encodeURIComponent(currentUser.schoolName)}&username=${u}&password=${p}`);
+                    systemDataCache = res;
+                    currentUser = res.users.find(usr => usr.username === u && usr.password === p);
+                    menuData = res.menu;
                     initDashboard();
                 } else {
-                    document.getElementById('loginErrorText').textContent = res.message;
+                    document.getElementById('loginErrorText').textContent = res.message || "Wrong username or password";
                     err.classList.remove('hidden');
                     document.getElementById('loginBox').classList.add('shake');
                     setTimeout(() => document.getElementById('loginBox').classList.remove('shake'), 500);
                     showLoader(false);
                 }
-            } catch (error) { showLoader(false); }
+            } catch (error) { 
+                console.error(error);
+                showLoader(false); 
+            }
         };
 
         function prepareIframeContent(code) {
@@ -610,14 +691,23 @@
                 const frame = document.getElementById('dashboardWidgetFrame');
                 
                 frame.onload = () => {
+                    let isResizing = false;
                     const adjustHeight = () => {
-                        try {
-                            const doc = frame.contentWindow.document;
-                            const newHeight = Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight);
-                            frame.style.height = newHeight + 'px';
-                        } catch (e) {
-                            console.warn("تعذر حساب الارتفاع الداخلي.");
-                        }
+                        if (isResizing) return;
+                        isResizing = true;
+                        window.requestAnimationFrame(() => {
+                            try {
+                                const doc = frame.contentWindow.document;
+                                const newHeight = Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight);
+                                // التحقق من تغير الارتفاع لتفادي الحلقات اللانهائية
+                                if (frame.style.height !== newHeight + 'px') {
+                                    frame.style.height = newHeight + 'px';
+                                }
+                            } catch (e) {
+                                console.warn("تعذر حساب الارتفاع الداخلي.");
+                            }
+                            isResizing = false;
+                        });
                     };
                     adjustHeight();
                     try {
@@ -711,7 +801,6 @@
             document.title = "EDU-Z - Dynamic Device Auth";
             document.getElementById('activePageTitle').textContent = "EDU-Z"; 
             
-            // إيقاف التحديث التلقائي عند تسجيل الخروج
             stopSilentPolling();
             
             try {
@@ -835,8 +924,6 @@
 
         function renderMenu() {
             const container = document.getElementById('menuContainer');
-            
-            // حفظ حالة القوائم المفتوحة حالياً حتى لا تنغلق عند التحديث التلقائي
             const openMenus = Array.from(container.querySelectorAll('.submenu-container.open')).map(el => el.id);
 
             container.innerHTML = '';
@@ -923,7 +1010,6 @@
             });
             lucide.createIcons();
 
-            // استعادة حالة القوائم المفتوحة
             openMenus.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
@@ -958,7 +1044,6 @@
             } finally { showLoader(false); closeModal(); }
         }
 
-        // --- دوال التحديث التلقائي (Silent Polling) الصامتة للإشعارات ---
         async function silentRefreshData() {
             if (!currentUser) return;
             try {
@@ -969,7 +1054,6 @@
                     const updatedUser = r.users.find(u => u.username === currentUser.username);
 
                     if (updatedUser) {
-                        // التحقق هل هناك اختلاف فعلي في أرقام الإشعارات؟
                         const countsChanged = 
                             currentUser.unread10 !== updatedUser.unread10 ||
                             currentUser.unread20 !== updatedUser.unread20 ||
@@ -980,10 +1064,8 @@
 
                         currentUser = updatedUser;
 
-                        // إذا كان هناك اختلاف، يتم تحديث الأيقونات والقوائم
                         if (countsChanged) {
                             renderMenu();
-                            // تحديث الشاشة الرئيسية إذا كان المستخدم يقف عليها
                             if (!document.getElementById('welcomeScreen').classList.contains('hidden')) {
                                 renderAppWall(document.getElementById('currentCategoryText').textContent || null);
                             }
@@ -1006,7 +1088,6 @@
                 pollingIntervalId = null;
             }
         }
-        // -------------------------------------------------------------
 
         function openVideoModal() {
             const m = document.getElementById('videoModal');
