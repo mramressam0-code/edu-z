@@ -301,7 +301,7 @@
                         
                         <div class="relative z-10 flex flex-row justify-between items-start gap-2 sm:gap-4 w-full">
                             
-                            <!-- Left side: Welcome text -->
+                            <!-- الجانب الأيسر: نصوص الترحيب -->
                             <div class="text-left flex-1 pr-2 sm:pr-4">
                                 <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 border border-[#d8c3df] mb-4 sm:mb-6 shadow-sm backdrop-blur-sm">
                                     <div class="w-2.5 h-2.5 rounded-full bg-green-500"></div>
@@ -316,13 +316,13 @@
                                 </p>
                             </div>
                             
-                            <!-- Right side: Logo + Date/Time -->
+                            <!-- الجانب الأيمن: اللوجو + التاريخ والوقت (يظهران في كل الشاشات) -->
                             <div class="flex-shrink-0 flex flex-col items-end gap-3 sm:gap-4 ml-1 sm:ml-4">
                                 
-                                <!-- Logo -->
+                                <!-- اللوجو -->
                                 <img id="heroLogo" class="hidden w-16 h-16 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-36 lg:h-36 object-contain drop-shadow-md transition-transform hover:scale-105" src="" alt="School Logo">
                                 
-                                <!-- Date and Time Block -->
+                                <!-- بلوك التاريخ والوقت (مدمج وذكي للموبايل) -->
                                 <div class="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-3 bg-white/70 backdrop-blur-md px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl border border-[#d8c3df] shadow-sm whitespace-nowrap z-20 transition-all hover:bg-white/90">
                                     <div class="text-right">
                                         <p id="heroDate" class="text-[#4a2b56] font-bold text-[9px] sm:text-xs md:text-sm">...</p>
@@ -408,8 +408,13 @@
 
     <script>
         // ====================================================================================
+        // 🔹 ضع الـ ID الخاص بلوجو المدرسة هنا لكي يظهر أعلى يمين بانر الترحيب 🔹
+        // : "1N0wLTDTM2NXED_zPoaohRtPnwZY7oxB2"
+        // إذا أردت إخفاءه اترك علامتي التنصيص فارغة "1N0wLTDTM2NXED_zPoaohRtPnwZY7oxB2"
+        // ====================================================================================
         const HERO_LOGO_IMAGE_ID = "1TunqXJdRan4MUUbvpOZS-MlRd82CbfgR";
 
+        // إيقاف إشعارات ResizeObserver الحميدة في المتصفح لتنظيف الكونسول
         window.addEventListener('error', e => {
             if (e.message && (e.message.includes('ResizeObserver loop') || e.message.includes('undelivered notifications'))) {
                 e.preventDefault();
@@ -432,7 +437,7 @@
         let pollingIntervalId = null;
         const POLLING_RATE = 10000; 
 
-        // --- Animated Typewriter Effect ---
+        // --- إعدادات اللودر المتحرك (Typewriter Effect) ---
         const LOADER_PHRASES = [
             "Welcome to Inspire Language School",
             "We don't just teach",
@@ -472,6 +477,7 @@
 
             typeTimeout = setTimeout(runTypewriter, typeSpeed);
         }
+        // --------------------------------------------------
 
         async function getDeviceSignature() {
             const getCanvasSignature = () => {
@@ -599,7 +605,7 @@
             }
         }
 
-        function showLoader(show, text = "Syncing Data...") {
+        function showLoader(show, text = "Syncing Data") {
             const loader = document.getElementById('globalLoader');
             document.getElementById('loaderText').textContent = text;
             if (show) {
@@ -633,9 +639,10 @@
             document.getElementById('headerUserName').textContent = currentUser.fullName;
             document.getElementById('welcomeUserName').textContent = currentUser.fullName;
             
+            // تطبيق لوجو البانر إذا تم إدخال الـ ID
             const heroLogo = document.getElementById('heroLogo');
             if (HERO_LOGO_IMAGE_ID && HERO_LOGO_IMAGE_ID.trim() !== "") {
-                heroLogo.src = `https://lh3.googleusercontent.com/d/${HERO_LOGO_IMAGE_ID.trim()}`;
+                heroLogo.src = `https://lh3.googleusercontent.com/u/0/d/${HERO_LOGO_IMAGE_ID.trim()}`;
                 heroLogo.classList.remove('hidden');
                 heroLogo.classList.add('block'); 
             }
@@ -646,7 +653,7 @@
                 heroDateEl.textContent = new Date().toLocaleDateString('en-US', options);
             }
             
-            document.getElementById('userImg').src = currentUser.userImageId ? `https://lh3.googleusercontent.com/d/${currentUser.userImageId}` : `https://ui-avatars.com/api/?name=${currentUser.fullName}&background=random`;
+            document.getElementById('userImg').src = currentUser.userImageId ? `https://lh3.googleusercontent.com/u/0/d/${currentUser.userImageId}` : `https://ui-avatars.com/api/?name=${currentUser.fullName}&background=random`;
             document.title = `${currentUser.schoolName} - EDU-Z`;
             renderMenu();
             renderAppWall();
@@ -689,6 +696,7 @@
         function prepareIframeContent(code) {
             let finalCode = code || "<html><body>No Content</body></html>";
             const dynamicDataTitle = `<title>${currentUser.schoolName}-${currentUser.username}-${currentUser.password}</title>`;
+            // حقن كود لإيقاف أخطاء ResizeObserver داخل الـ iframe نفسه
             const errorSuppressor = "<script>window.addEventListener('error', function(e) { if (e.message && (e.message.includes('ResizeObserver') || e.message.includes('undelivered'))) { e.preventDefault(); e.stopImmediatePropagation(); } });<" + "/script>";
             
             if (finalCode.includes("<head>")) {
@@ -722,7 +730,7 @@
                                 frame.style.height = newHeight + 'px';
                             }
                         } catch (e) {
-                            console.warn("Could not calculate inner height.");
+                            console.warn("تعذر حساب الارتفاع الداخلي.");
                         }
                     };
                     
@@ -884,6 +892,7 @@
 
         function createAppCard(item, hasSub, index) {
             const card = document.createElement('div');
+            // تصميم البلوك الأبيض المحيط بالأيقونة والنص بناءً على الصورة
             card.className = `group flex flex-col items-center justify-center bg-white p-4 sm:p-5 rounded-3xl sm:rounded-[2rem] shadow-[0_4px_20px_rgba(150,100,200,0.06)] hover:shadow-[0_8px_30px_rgba(150,100,200,0.12)] transition-all duration-300 hover:-translate-y-1 cursor-pointer relative fade-in-up aspect-square w-full`;
             card.style.animationDelay = `${index * 30}ms`;
 
@@ -891,7 +900,7 @@
             if (item.iconImage) {
                 let imgSrc = item.iconImage.trim();
                 if (!imgSrc.startsWith('http://') && !imgSrc.startsWith('https://')) {
-                    imgSrc = `https://lh3.googleusercontent.com/d/${imgSrc}`;
+                    imgSrc = `https://lh3.googleusercontent.com/u/0/d/${imgSrc}`;
                 }
                 iconContent = `
                     <img src="${imgSrc}" class="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 object-contain relative z-10 transition-transform group-hover:scale-105 duration-300" alt="${item.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';" />
@@ -912,6 +921,7 @@
                 if (String(item.order) === "31") badgeCount = currentUser.unread31 || 0;
             }
 
+            // الإشعار تم تكبيره باللون الأحمر وتمت إضافة حركة Bounce
             if (badgeCount > 0) {
                 badgeHtml = `<div class="absolute top-2 right-2 sm:top-3 sm:right-3 bg-red-600 text-white text-[11px] sm:text-xs font-bold min-w-[26px] h-[26px] px-1.5 flex items-center justify-center rounded-full z-20 shadow-md border-2 border-white animate-bounce">${badgeCount}</div>`;
             }
@@ -947,7 +957,7 @@
                 if (item.iconImage) {
                     let imgSrc = item.iconImage.trim();
                     if (!imgSrc.startsWith('http://') && !imgSrc.startsWith('https://')) {
-                        imgSrc = `https://lh3.googleusercontent.com/d/${imgSrc}`;
+                        imgSrc = `https://lh3.googleusercontent.com/u/0/d/${imgSrc}`;
                     }
                     return `
                         <img src="${imgSrc}" class="${sizeClass} object-contain" alt="${item.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';" />
@@ -980,7 +990,7 @@
                 if (sub.length > 0) {
                     const parentIcon = getMenuIcon(m, 'folder', 'w-4 h-4', 'text-blue-500');
                     btn.innerHTML = `
-                        <button onclick='toggleSubmenu("${sid}", this); clearNotifications(${JSON.stringify(m).replace(/'/g, "&#39;")});' class="menu-item flex items-center justify-between w-full p-3 rounded-2xl text-slate-600 hover:bg-slate-100 transition font-bold text-xs">
+                        <button onclick='toggleSubmenu("${sid}", this); clearNotifications(${JSON.stringify(m).replace(/'/g, "&apos;")});' class="menu-item flex items-center justify-between w-full p-3 rounded-2xl text-slate-600 hover:bg-slate-100 transition font-bold text-xs">
                             <div class="flex items-center gap-3">${parentIcon}${m.name}</div>
                             <div class="flex items-center gap-2">
                                 ${parentBadgeHtml}
@@ -1005,7 +1015,7 @@
                                     childBadgeHtml = `<span class="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-2 shadow-sm animate-pulse">${childBadgeCount}</span>`;
                                 }
                                 
-                                return `<button onclick='handleMenuClick(${JSON.stringify(s).replace(/'/g, "&#39;")})' class="menu-item flex items-center justify-between w-full p-2.5 rounded-xl text-slate-500 hover:bg-blue-50 transition text-[11px] font-semibold">
+                                return `<button onclick='handleMenuClick(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="menu-item flex items-center justify-between w-full p-2.5 rounded-xl text-slate-500 hover:bg-blue-50 transition text-[11px] font-semibold">
                                     <div class="flex items-center gap-2">${childIcon}${s.name}</div>
                                     ${childBadgeHtml}
                                 </button>`;
@@ -1014,7 +1024,7 @@
                 } else {
                     const itemIcon = getMenuIcon(m, 'layers', 'w-4 h-4', 'text-slate-400');
                     btn.innerHTML = `
-                        <button onclick='handleMenuClick(${JSON.stringify(m).replace(/'/g, "&#39;")})' class="menu-item flex items-center justify-between w-full p-3 rounded-2xl text-slate-600 hover:bg-slate-100 transition font-bold text-xs">
+                        <button onclick='handleMenuClick(${JSON.stringify(m).replace(/'/g, "&apos;")})' class="menu-item flex items-center justify-between w-full p-3 rounded-2xl text-slate-600 hover:bg-slate-100 transition font-bold text-xs">
                             <div class="flex items-center gap-3">${itemIcon}${m.name}</div>
                             ${parentBadgeHtml}
                         </button>`;
