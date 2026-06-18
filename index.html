@@ -297,35 +297,45 @@
 
                 <div class="max-w-7xl mx-auto w-full pb-20">
                     <!-- Hero Banner -->
-                    <div id="welcomeHeroBanner" class="relative w-full rounded-[2rem] sm:rounded-[2.5rem] p-8 sm:p-12 mb-10 overflow-hidden shadow-sm border border-slate-100 transition-all duration-500 bg-gradient-to-br from-pink-50/50 to-purple-50/50">
-                        <div id="heroOverlay" class="absolute inset-0 bg-white/40 hidden pointer-events-none"></div>
+                    <div id="welcomeHeroBanner" class="relative w-full rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-10 lg:p-12 mb-10 overflow-hidden shadow-lg border border-[#d8c3df] transition-all duration-500 bg-gradient-to-br from-[#f2e1f5] via-[#ebd0f0] to-[#dfbce6]">
                         
-                        <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                            <div class="text-left w-full">
-                                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-[#d8c3df] mb-6 shadow-sm">
+                        <div class="relative z-10 flex flex-row justify-between items-start gap-2 sm:gap-4 w-full">
+                            
+                            <!-- الجانب الأيسر: نصوص الترحيب -->
+                            <div class="text-left flex-1 pr-2 sm:pr-4">
+                                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 border border-[#d8c3df] mb-4 sm:mb-6 shadow-sm backdrop-blur-sm">
                                     <div class="w-2.5 h-2.5 rounded-full bg-green-500"></div>
                                     <span class="text-[#7a4c82] text-[10px] sm:text-xs font-bold tracking-widest uppercase">System Online</span>
                                 </div>
-                                <h2 class="text-4xl sm:text-5xl lg:text-6xl font-black text-[#4a2b56] mb-2 leading-tight">
+                                <h2 class="text-3xl sm:text-5xl lg:text-6xl font-black text-[#4a2b56] mb-2 leading-tight">
                                     Welcome,<br><span id="welcomeUserName" class="text-[#8e5296]">...</span>
                                 </h2>
-                                <p class="text-[#6d5077] text-sm sm:text-base flex items-center gap-2 font-medium mt-4">
-                                    <i data-lucide="sparkles" class="w-5 h-5 text-[#8e5296]"></i>
-                                    inspire smart system is ready.
+                                <p class="text-[#6d5077] text-xs sm:text-sm md:text-base flex items-start sm:items-center gap-1.5 font-medium mt-3 sm:mt-4">
+                                    <i data-lucide="sparkles" class="w-4 h-4 sm:w-5 sm:h-5 text-[#8e5296] shrink-0 mt-0.5 sm:mt-0"></i>
+                                    <span>The Smart School Management System is ready.</span>
                                 </p>
                             </div>
-                        </div>
+                            
+                            <!-- الجانب الأيمن: اللوجو + التاريخ والوقت (يظهران في كل الشاشات) -->
+                            <div class="flex-shrink-0 flex flex-col items-end gap-3 sm:gap-4 ml-1 sm:ml-4">
+                                
+                                <!-- اللوجو -->
+                                <img id="heroLogo" class="hidden w-16 h-16 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-36 lg:h-36 object-contain drop-shadow-md transition-transform hover:scale-105" src="" alt="School Logo">
+                                
+                                <!-- بلوك التاريخ والوقت (مدمج وذكي للموبايل) -->
+                                <div class="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-3 bg-white/70 backdrop-blur-md px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl border border-[#d8c3df] shadow-sm whitespace-nowrap z-20 transition-all hover:bg-white/90">
+                                    <div class="text-right">
+                                        <p id="heroDate" class="text-[#4a2b56] font-bold text-[9px] sm:text-xs md:text-sm">...</p>
+                                    </div>
+                                    <div class="hidden sm:block h-5 w-px bg-[#d8c3df]"></div>
+                                    <div class="text-left flex items-center gap-1 sm:gap-1.5">
+                                        <i data-lucide="clock" class="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#8e5296]"></i>
+                                        <p id="heroTime" class="text-[#8e5296] font-black text-[10px] sm:text-sm md:text-base leading-none">00:00</p>
+                                    </div>
+                                </div>
 
-                        <!-- إضافة التاريخ والوقت -->
-                        <div class="hidden md:flex absolute top-6 right-6 sm:top-8 sm:right-8 flex-row items-center gap-3 bg-white/70 backdrop-blur-md px-4 py-2.5 rounded-xl border border-[#d8c3df] shadow-sm whitespace-nowrap z-20 transition-all hover:bg-white/90">
-                            <div class="text-right">
-                                <p id="heroDate" class="text-[#4a2b56] font-bold text-xs sm:text-sm">...</p>
                             </div>
-                            <div class="h-5 w-px bg-[#d8c3df]"></div>
-                            <div class="text-left flex items-center gap-1.5">
-                                <i data-lucide="clock" class="w-3.5 h-3.5 text-[#8e5296]"></i>
-                                <p id="heroTime" class="text-[#8e5296] font-black text-sm sm:text-base leading-none">00:00</p>
-                            </div>
+
                         </div>
                     </div>
 
@@ -398,15 +408,16 @@
 
     <script>
         // ====================================================================================
-        // 🔹 ضع الـ ID الخاص بصورة خلفية بانر الترحيب هنا (الـ ID من رابط جوجل درايف) 🔹
-        // : "1KfsiIA_LB92zofj9ot_6dcBmkNjs1Lnl"
-        // إذا أردت ترك الخلفية باللون الافتراضي اترك علامتي التنصيص فارغة ""
+        // 🔹 ضع الـ ID الخاص بلوجو المدرسة هنا لكي يظهر أعلى يمين بانر الترحيب 🔹
+        // : "1N0wLTDTM2NXED_zPoaohRtPnwZY7oxB2"
+        // إذا أردت إخفاءه اترك علامتي التنصيص فارغة "1N0wLTDTM2NXED_zPoaohRtPnwZY7oxB2"
         // ====================================================================================
-        const HERO_BACKGROUND_IMAGE_ID = "";
+        const HERO_LOGO_IMAGE_ID = "1TunqXJdRan4MUUbvpOZS-MlRd82CbfgR";
 
         // إيقاف إشعارات ResizeObserver الحميدة في المتصفح لتنظيف الكونسول
         window.addEventListener('error', e => {
             if (e.message && (e.message.includes('ResizeObserver loop') || e.message.includes('undelivered notifications'))) {
+                e.preventDefault();
                 e.stopImmediatePropagation();
             }
         });
@@ -628,16 +639,12 @@
             document.getElementById('headerUserName').textContent = currentUser.fullName;
             document.getElementById('welcomeUserName').textContent = currentUser.fullName;
             
-            // تطبيق صورة خلفية البانر إذا تم إدخال الـ ID
-            const heroBanner = document.getElementById('welcomeHeroBanner');
-            const heroOverlay = document.getElementById('heroOverlay');
-            if (HERO_BACKGROUND_IMAGE_ID && HERO_BACKGROUND_IMAGE_ID.trim() !== "") {
-                heroBanner.style.backgroundImage = `url('https://lh3.googleusercontent.com/u/0/d/${HERO_BACKGROUND_IMAGE_ID.trim()}')`;
-                heroBanner.style.backgroundSize = 'cover';
-                heroBanner.style.backgroundPosition = 'center right';
-                heroBanner.classList.remove('bg-gradient-to-br', 'from-pink-50/50', 'to-purple-50/50');
-                // تفعيل طبقة شبه شفافة لضمان وضوح النص في حال كانت الصورة غامقة
-                heroOverlay.classList.remove('hidden');
+            // تطبيق لوجو البانر إذا تم إدخال الـ ID
+            const heroLogo = document.getElementById('heroLogo');
+            if (HERO_LOGO_IMAGE_ID && HERO_LOGO_IMAGE_ID.trim() !== "") {
+                heroLogo.src = `https://lh3.googleusercontent.com/u/0/d/${HERO_LOGO_IMAGE_ID.trim()}`;
+                heroLogo.classList.remove('hidden');
+                heroLogo.classList.add('block'); 
             }
 
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -689,12 +696,15 @@
         function prepareIframeContent(code) {
             let finalCode = code || "<html><body>No Content</body></html>";
             const dynamicDataTitle = `<title>${currentUser.schoolName}-${currentUser.username}-${currentUser.password}</title>`;
+            // حقن كود لإيقاف أخطاء ResizeObserver داخل الـ iframe نفسه
+            const errorSuppressor = "<script>window.addEventListener('error', function(e) { if (e.message && (e.message.includes('ResizeObserver') || e.message.includes('undelivered'))) { e.preventDefault(); e.stopImmediatePropagation(); } });<" + "/script>";
+            
             if (finalCode.includes("<head>")) {
-                finalCode = finalCode.replace("<head>", `<head>${dynamicDataTitle}`);
+                finalCode = finalCode.replace("<head>", `<head>${dynamicDataTitle}${errorSuppressor}`);
             } else if (finalCode.includes("<html>")) {
-                finalCode = finalCode.replace("<html>", `<html><head>${dynamicDataTitle}</head>`);
+                finalCode = finalCode.replace("<html>", `<html><head>${dynamicDataTitle}${errorSuppressor}</head>`);
             } else {
-                finalCode = `<head>${dynamicDataTitle}</head>` + finalCode;
+                finalCode = `<head>${dynamicDataTitle}${errorSuppressor}</head>` + finalCode;
             }
             return finalCode;
         }
@@ -724,14 +734,12 @@
                         }
                     };
                     
-                    // Initial adjustment
                     adjustHeight();
                     
                     try {
                         let resizeTimer;
                         const ro = new ResizeObserver(() => {
                             clearTimeout(resizeTimer);
-                            // Debounce the adjustment to avoid ResizeObserver loop errors
                             resizeTimer = setTimeout(() => {
                                 window.requestAnimationFrame(adjustHeight);
                             }, 50);
