@@ -382,7 +382,6 @@
             </div>
 
             <!-- Content Area (Iframes) -->
-            <!-- التعديل: تحويل flex-row لـ flex-col على الموبايل لكي تظهر النوافذ تحت بعضها بدلاً من الانضغاط بجانب بعض -->
             <div id="mainContentArea" class="hidden absolute inset-0 flex flex-col md:flex-row gap-0 p-0 transition-all overflow-y-auto md:overflow-hidden">
                 <div id="pane1" class="pane-transition flex-1 flex flex-col bg-white border-2 border-transparent relative z-0" onclick="setActivePane(1)">
                     <div id="pane1Header" class="hidden bg-slate-100 border-b px-3 sm:px-4 py-2 flex justify-between items-center shrink-0">
@@ -409,8 +408,6 @@
     <script>
         // ====================================================================================
         // 🔹 ضع الـ ID الخاص بلوجو المدرسة هنا لكي يظهر أعلى يمين بانر الترحيب 🔹
-        // : "1N0wLTDTM2NXED_zPoaohRtPnwZY7oxB2"
-        // إذا أردت إخفاءه اترك علامتي التنصيص فارغة "1N0wLTDTM2NXED_zPoaohRtPnwZY7oxB2"
         // ====================================================================================
         const HERO_LOGO_IMAGE_ID = "1TunqXJdRan4MUUbvpOZS-MlRd82CbfgR";
 
@@ -479,44 +476,41 @@
         }
         // --------------------------------------------------
 
+        // ============================================================================
+        // 🔹 التحديث الجديد: بصمة جهاز متفردة 100% (تعتمد على Crypto UUID + Local Storage) 🔹
+        // ============================================================================
         async function getDeviceSignature() {
-            const getCanvasSignature = () => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                canvas.width = 240; canvas.height = 40;
-                ctx.textBaseline = "top";
-                ctx.font = "14px 'Arial'";
-                ctx.fillStyle = "#f60"; ctx.fillRect(125,1,62,20);
-                ctx.fillStyle = "#069"; ctx.fillText("EDU-Z-STABLE-v4", 2, 15);
-                return canvas.toDataURL().slice(-50);
-            };
+            const STORAGE_KEY = 'EDUZ_SUPER_UNIQUE_DEVICE_ID';
+            let storedFingerprint = localStorage.getItem(STORAGE_KEY);
 
-            const getWebGLRenderer = () => {
-                const gl = document.createElement('canvas').getContext('webgl');
-                if (!gl) return "no-webgl";
-                const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-                return debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : "unknown";
-            };
+            if (!storedFingerprint) {
+                // 1. توليد UUID عشوائي مشفر مستحيل تكراره رياضياً
+                const generateUUID = () => {
+                    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+                        return crypto.randomUUID();
+                    }
+                    // دالة احتياطية في حال عدم دعم المتصفح
+                    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                        return v.toString(16);
+                    });
+                };
 
-            const components = [
-                navigator.platform,
-                navigator.hardwareConcurrency || "n/a",
-                screen.width + "x" + screen.height,
-                screen.colorDepth,
-                getWebGLRenderer(),
-                getCanvasSignature(),
-                Intl.DateTimeFormat().resolvedOptions().timeZone
-            ];
-
-            const raw = components.join('||');
-            let hash = 0;
-            for (let i = 0; i < raw.length; i++) {
-                const char = raw.charCodeAt(i);
-                hash = ((hash << 5) - hash) + char;
-                hash = hash & hash;
+                // 2. جمع بيانات إضافية لجعل النص طويلاً ومُعقداً كما طلبت
+                const timeStamp = Date.now().toString(36);
+                const randomSalt = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+                const screenData = `${screen.width}x${screen.height}x${screen.colorDepth}`;
+                
+                // دمج المكونات لإنشاء بصمة طويلة جداً وفريدة
+                storedFingerprint = `EDU-Z-${generateUUID()}-${timeStamp}-${randomSalt}-${screenData}`;
+                
+                // 3. حفظها في ذاكرة المتصفح للأبد
+                localStorage.setItem(STORAGE_KEY, storedFingerprint);
             }
-            return "EDU-" + Math.abs(hash).toString(16).toUpperCase();
+
+            return storedFingerprint;
         }
+        // ============================================================================
 
         document.addEventListener('DOMContentLoaded', async () => {
             lucide.createIcons();
@@ -535,7 +529,7 @@
                 if (systemDataCache.savedLogins && systemDataCache.savedLogins.length > 0) {
                     const validUser = systemDataCache.users.find(u => 
                         systemDataCache.savedLogins.some(s => s.username === u.username && s.password === u.password) 
-                        && u.deviceId === sig
+                        && u.deviceId === sig // يقارن البصمة الجديدة المحفوظة
                     );
 
                     if (validUser) {
@@ -892,7 +886,6 @@
 
         function createAppCard(item, hasSub, index) {
             const card = document.createElement('div');
-            // التعديل: تقليل المسافات الداخلية للكروت لتناسب الموبايل
             card.className = `group flex flex-col items-center justify-center bg-white p-2.5 sm:p-5 rounded-[1.2rem] sm:rounded-[2rem] shadow-[0_4px_20px_rgba(150,100,200,0.06)] hover:shadow-[0_8px_30px_rgba(150,100,200,0.12)] transition-all duration-300 hover:-translate-y-1 cursor-pointer relative fade-in-up aspect-square w-full`;
             card.style.animationDelay = `${index * 30}ms`;
 
@@ -902,7 +895,6 @@
                 if (!imgSrc.startsWith('http://') && !imgSrc.startsWith('https://')) {
                     imgSrc = `https://lh3.googleusercontent.com/u/0/d/${imgSrc}`;
                 }
-                // التعديل: ضبط حجم الأيقونات ديناميكياً
                 iconContent = `
                     <img src="${imgSrc}" class="w-10 h-10 min-[400px]:w-12 min-[400px]:h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 object-contain relative z-10 transition-transform group-hover:scale-105 duration-300" alt="${item.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';" />
                     <i data-lucide="${hasSub ? 'folder' : 'layout-grid'}" class="w-8 h-8 text-[#7a4c82] relative z-10" style="display:none;"></i>
@@ -1169,7 +1161,6 @@
             const p2 = document.getElementById('pane2');
             const h1 = document.getElementById('pane1Header');
             if (isSplitMode) {
-                // إضافة مسافات وحواف للتوافق مع التقسيم الجديد
                 p2.classList.remove('hidden'); area.classList.add('p-1', 'sm:p-2', 'gap-1', 'sm:gap-2'); h1.classList.remove('hidden'); setActivePane(1);
             } else {
                 p2.classList.add('hidden'); area.classList.remove('p-1', 'sm:p-2', 'gap-1', 'sm:gap-2'); h1.classList.add('hidden'); activePane = 1;
