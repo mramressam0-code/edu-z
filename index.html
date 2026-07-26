@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Inspire Language School</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -751,7 +751,11 @@
 
         document.addEventListener('DOMContentLoaded', async () => {
             applyLanguageUI();
-            lucide.createIcons();
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            } else {
+                console.warn("Lucide icons failed to load, continuing anyway...");
+            }
             startClock();
             initFloatingIcons();
             await checkInitialLoginState();
@@ -1132,7 +1136,7 @@
                     grid.appendChild(createAppCard(item, false, index));
                 });
             }
-            lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         function createAppCard(item, hasSub, index) {
@@ -1281,7 +1285,8 @@
                 }
                 container.appendChild(btn);
             });
-            lucide.createIcons();
+            
+            if (typeof lucide !== 'undefined') lucide.createIcons();
 
             openMenus.forEach(id => {
                 const el = document.getElementById(id);
@@ -1432,6 +1437,7 @@
                 if (heroTimeEl) heroTimeEl.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
             }, 1000);
         }
+        
         function initFloatingIcons() {
             const container = document.getElementById('background-elements');
             if (!container) return;
@@ -1439,7 +1445,7 @@
             for (let i = 0; i < 15; i++) {
                 const el = document.createElement('i');
                 el.className = `fa-solid ${icons[Math.floor(Math.random()*icons.length)]} bg-icon`;
-                // Support logic direction rendering
+                
                 if (Math.random() > 0.5) {
                     el.style.left = `${Math.random()*100}vw`;
                 } else {
