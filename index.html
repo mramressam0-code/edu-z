@@ -608,11 +608,11 @@
         function updateNavButtonsState() {
             const backBtn = document.getElementById('headerBackBtn');
             if (backBtn) {
-                if (navHistoryStack.length === 0) {
+                if (navHistoryStack.length === 0 || currentNavState.view === 'home') {
                     backBtn.classList.remove('opacity-100', 'scale-100');
                     backBtn.classList.add('opacity-0', 'scale-95');
                     setTimeout(() => { 
-                        if(navHistoryStack.length === 0) {
+                        if(navHistoryStack.length === 0 || currentNavState.view === 'home') {
                             backBtn.classList.add('hidden'); 
                             backBtn.classList.remove('flex');
                         }
@@ -629,7 +629,7 @@
         }
 
         function navigateBack() {
-            if (navHistoryStack.length === 0) return;
+            if (navHistoryStack.length === 0 || currentNavState.view === 'home') return;
             const prevState = navHistoryStack.pop();
             navForwardStack.push(currentNavState);
             currentNavState = prevState;
@@ -1398,7 +1398,7 @@
         function closeModal() { document.getElementById('confirmModal').classList.add('hidden'); }
         
         function goToHomePage() { 
-            saveNavState({ view: 'home', data: null }); 
+            resetNavHistory(); 
             document.getElementById('mainContentArea').classList.add('hidden');
             document.getElementById('welcomeScreen').classList.remove('hidden');
             document.getElementById('activePageTitle').textContent = "EDU-Z";
