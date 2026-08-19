@@ -426,7 +426,7 @@
             }
         });
 
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGDG3pLC7i5W3Pp3lQCmkv3MTLbjDyRiJnrFIFT7a8PtCO7iu6ZJwVLX54OmQx8J2vKg/exec";
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyWCP-KR68fjM42rE5SfbLHYmJlvTsR5KBNk99IZnvDq3wRfWNmhRgVaq6qXGP1piW-tg/exec";
         const DEMO_VIDEO_DRIVE_ID = "1KZBVGd7bjmqqBTls3YX1CG0_hUhtqtrN";
         
         let currentUser = null;
@@ -439,7 +439,7 @@
         let isLoginFormOpen = false;
 
         let pollingIntervalId = null;
-        const POLLING_RATE = 10000; 
+        const POLLING_RATE = 30000; 
 
         // ============================================================================
         // 🔹 Language System 🔹
@@ -765,19 +765,16 @@
         async function checkInitialLoginState() {
             showLoader(true, langDict[currentLang].checking);
             try {
-                const res = await fetch(`${APPS_SCRIPT_URL}?action=getAllData`);
-                systemDataCache = await res.json();
                 const sig = await getDeviceSignature();
+                // نطلب البيانات العامة ونمرر البصمة مباشرة لتسجيل الدخول التلقائي بأمان وسرعة
+                const res = await (await fetch(`${APPS_SCRIPT_URL}?action=getAllData&deviceId=${encodeURIComponent(sig)}`)).json();
 
-                if (systemDataCache.savedLogins && systemDataCache.savedLogins.length > 0) {
-                    const validUser = systemDataCache.users.find(u => 
-                        systemDataCache.savedLogins.some(s => s.username === u.username && s.password === u.password) 
-                        && u.deviceId === sig 
-                    );
-
-                    if (validUser) {
-                        currentUser = validUser;
-                        menuData = systemDataCache.menu;
+                if (res.status === "success") {
+                    systemDataCache = res; // حفظ البيانات دائماً للوصول للقوائم
+                    if (res.users && res.users.length > 0) {
+                        // نجح تسجيل الدخول التلقائي من خلال البصمة!
+                        currentUser = res.users[0]; // الآن لدينا مستخدم واحد فقط (آمن جداً)
+                        menuData = res.menu;
                         initDashboard();
                         return;
                     }
@@ -790,7 +787,13 @@
         }
 
         function renderPublicLandingPage() {
-            if (!systemDataCache || !systemDataCache.menu) return;
+            // Check if systemDataCache exists, but fallback gracefully if not
+            if (!systemDataCache || !systemDataCache.menu) {
+                const publicLogo = document.getElementById('publicEduzLogo');
+                if (publicLogo) publicLogo.classList.remove('hidden'); 
+                toggleLoginForm(true);
+                return;
+            }
             const landingItem = systemDataCache.menu.find(item => String(item.order) === "00");
             const publicLogo = document.getElementById('publicEduzLogo');
             const iframe = document.getElementById('landingIframe');
@@ -801,6 +804,8 @@
                 const blob = new Blob([codeToLoad], { type: 'text/html' });
                 iframe.src = URL.createObjectURL(blob);
                 if (publicLogo) publicLogo.classList.add('hidden'); 
+                
+                toggleLoginForm(false); // إخفاء فورم اللوجين وعرض اللاندينج
                 
                 iframe.onload = () => {
                     try {
@@ -913,9 +918,10 @@
                 
                 const res = await (await fetch(`${APPS_SCRIPT_URL}?action=fastLogin&username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}&deviceId=${encodeURIComponent(d)}`)).json();
                 
-                if (res.status === "success") {
+                if (res.status === "success" && res.users && res.users.length > 0) {
                     systemDataCache = res;
-                    currentUser = res.users.find(usr => usr.username === u && usr.password === p);
+                    // الاعتماد على المستخدم المبعوث فقط (أمان كامل)
+                    currentUser = res.users[0];
                     menuData = res.menu;
                     initDashboard();
                 } else {
@@ -1091,6 +1097,7 @@
             document.getElementById('mainContentArea').classList.add('hidden');
             document.getElementById('welcomeScreen').classList.remove('hidden');
 
+            // إخفاء الـ Public Landing Page والعودة لشاشة اللوجين كافتراضي عند الخروج
             renderPublicLandingPage();
         }
 
@@ -1300,12 +1307,19 @@
         async function refreshData() {
             showLoader(true, langDict[currentLang].syncing);
             try {
-                const r = await (await fetch(`${APPS_SCRIPT_URL}?action=getAllData`)).json();
-                systemDataCache = r; menuData = r.menu;
+                // نمرر اسم المستخدم لكي لا يجلب بيانات جميع المستخدمين
+                let url = `${APPS_SCRIPT_URL}?action=getAllData`;
                 if (currentUser) {
-                    const updatedUser = r.users.find(u => u.username === currentUser.username);
-                    if (updatedUser) currentUser = updatedUser;
+                    url += `&username=${encodeURIComponent(currentUser.username)}`;
                 }
+                
+                const r = await (await fetch(url)).json();
+                systemDataCache = r; menuData = r.menu;
+                
+                if (currentUser && r.users && r.users.length > 0) {
+                    currentUser = r.users[0]; // استلام بيانات المستخدم المطلوب فقط
+                }
+                
                 renderMenu(); 
                 const parentId = document.getElementById('appWallBreadcrumb').dataset.parentId;
                 renderAppWall(parentId || null);
@@ -1317,11 +1331,12 @@
         async function silentRefreshData() {
             if (!currentUser) return;
             try {
-                const r = await (await fetch(`${APPS_SCRIPT_URL}?action=getAllData`)).json();
+                // نمرر اسم المستخدم لكي نحمي سيرفر جوجل من الإجهاد
+                const r = await (await fetch(`${APPS_SCRIPT_URL}?action=getAllData&username=${encodeURIComponent(currentUser.username)}`)).json();
                 if (r.status === "success") {
                     systemDataCache = r; 
                     menuData = r.menu;
-                    const updatedUser = r.users.find(u => u.username === currentUser.username);
+                    const updatedUser = r.users[0]; // تم إرجاع بياناته فقط
 
                     if (updatedUser) {
                         const countsChanged = 
