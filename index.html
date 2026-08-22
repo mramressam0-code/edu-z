@@ -146,7 +146,6 @@
                 
                 <div id="loginBox" class="glass-panel p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] w-full shadow-2xl fade-in-up">
                     <form id="loginForm" class="space-y-4 sm:space-y-5">
-                        
                         <div id="loginStep1" class="transition-all duration-300">
                             <div>
                                 <label id="lblUsername" class="text-[10px] sm:text-[11px] font-bold text-blue-200 ms-2 mb-1.5 block">Username</label>
@@ -417,7 +416,11 @@
         let activePane = 1;
         let activeItems = { 1: null, 2: null };
         let isLoginFormOpen = false;
+        
         let userUnsubscribe = null; 
+        let notifUnsubscribe = null;
+        let dynamicUnreadCounts = { '10': 0, '20': 0, '25': 0, '30': 0, '39': 0 };
+        let currentNotificationDocs = [];
 
         let currentLang = localStorage.getItem('EDUZ_LANG') || 'en';
         
@@ -897,6 +900,7 @@
             renderMenu(); renderAppWall(); renderDashboardWidget(); showLoader(false);
 
             startSilentPolling();
+            startNotificationsPolling();
         }
 
         function prepareIframeContent(code) {
@@ -952,6 +956,79 @@
             } else { widgetSection.classList.add('hidden'); }
         }
 
+        function startNotificationsPolling() {
+            if (notifUnsubscribe) notifUnsubscribe();
+            if (!currentUser || !currentUser.username) return;
+
+            const notifRef = window.fbCollection(window.firebaseDB, "notifications");
+            
+            try {
+                notifUnsubscribe = window.fbOnSnapshot(notifRef, (snapshot) => {
+                    processNotifications(snapshot.docs, true);
+                }, (err) => {
+                    console.error("Notifications fetch error:", err);
+                });
+            } catch(e) {
+                console.error("Polling Setup Error:", e);
+            }
+        }
+
+        function processNotifications(docs, manualFilter = false) {
+            currentNotificationDocs = docs; 
+            dynamicUnreadCounts = { '10': 0, '20': 0, '25': 0, '30': 0, '39': 0 };
+            const typeMap = { 'peh': '25', 'message': '30', 'abs': '20', 'sub': '10', 'conc': '39' };
+
+            docs.forEach(docSnap => {
+                const data = docSnap.data();
+                const type = String(data.type || '').toLowerCase().trim();
+                const targetOrder = typeMap[type];
+
+                if (!targetOrder) return; 
+
+                // تحويل بيانات المستخدمين إلى مصفوفة نظيفة سواء كانت نص أو مصفوفة فعلية
+                let usersField = data.users || [];
+                let usersArr = Array.isArray(usersField) ? usersField.map(s => String(s).trim()) : String(usersField).split(',').map(s => s.trim()).filter(Boolean);
+
+                // فحص المطابقة بناءً على اسم المستخدم العادي
+                let isNormalUser = usersArr.includes(currentUser.username);
+                
+                // فحص المطابقة الخاصة بـ school admin لإشعارات conc
+                let isUserTypeAdmin = (currentUser.userType === 'school admin' || currentUser.role === 'school admin');
+                let isAdminMatch = (type === 'conc' && isUserTypeAdmin && usersArr.includes('school admin'));
+
+                if (isNormalUser || isAdminMatch) {
+                    // تحويل بيانات حالة القراءة إلى مصفوفة نظيفة
+                    let statusField = data.status || [];
+                    let statusArr = Array.isArray(statusField) ? statusField.map(s => String(s).trim()) : String(statusField).split(',').map(s => s.trim()).filter(Boolean);
+
+                    let hasSeen = false;
+                    
+                    // إذا كان المستهدف هو اليوزر العادي، هل شاهدها؟
+                    if (isNormalUser && statusArr.includes(currentUser.username)) {
+                        hasSeen = true;
+                    }
+                    
+                    // إذا كان المستهدف هو الأدمن، هل شاهدها كأدمن؟
+                    if (isAdminMatch && statusArr.includes('school admin')) {
+                        hasSeen = true;
+                    }
+
+                    if (!hasSeen) {
+                        dynamicUnreadCounts[targetOrder]++;
+                    }
+                }
+            });
+
+            // تحديث الواجهة فوراً
+            renderMenu();
+            const breadcrumb = document.getElementById('appWallBreadcrumb');
+            if (breadcrumb && !breadcrumb.classList.contains('hidden')) {
+                renderAppWall(breadcrumb.dataset.parentId || null);
+            } else if (!document.getElementById('welcomeScreen').classList.contains('hidden')) {
+                renderAppWall(null);
+            }
+        }
+
         async function clearNotifications(item) {
             if (!currentUser || !currentUser.id || !item) return;
             
@@ -963,12 +1040,58 @@
                 subItems.forEach(s => ordersToClear.push(String(s.order)));
             }
 
+            try {
+                const typeMapRev = { '25': 'peh', '30': 'message', '20': 'abs', '10': 'sub', '39': 'conc' };
+                const typesToClear = ordersToClear.map(o => typeMapRev[o]).filter(Boolean);
+                
+                if (typesToClear.length > 0 && currentNotificationDocs) {
+                    currentNotificationDocs.forEach(async (docSnap) => {
+                        const data = docSnap.data();
+                        const type = String(data.type || '').toLowerCase().trim();
+                        
+                        if (typesToClear.includes(type)) {
+                            
+                            let usersField = data.users || [];
+                            let usersArr = Array.isArray(usersField) ? usersField.map(s => String(s).trim()) : String(usersField).split(',').map(s => s.trim()).filter(Boolean);
+                            
+                            let isNormalUser = usersArr.includes(currentUser.username);
+                            let isUserTypeAdmin = (currentUser.userType === 'school admin' || currentUser.role === 'school admin');
+                            let isAdminMatch = (type === 'conc' && isUserTypeAdmin && usersArr.includes('school admin'));
+
+                            if (isNormalUser || isAdminMatch) {
+                                let statusField = data.status || [];
+                                let statusIsArray = Array.isArray(statusField);
+                                let statusArr = statusIsArray ? statusField.map(s => String(s).trim()) : String(statusField).split(',').map(s => s.trim()).filter(Boolean);
+                                
+                                let needsUpdate = false;
+                                
+                                // إذا كان يوزراً عادياً ولم يشاهدها من قبل
+                                if (isNormalUser && !statusArr.includes(currentUser.username)) {
+                                    statusArr.push(currentUser.username);
+                                    needsUpdate = true;
+                                }
+                                
+                                // إذا كان أدمن ولم يشاهدها من قبل
+                                if (isAdminMatch && !statusArr.includes('school admin')) {
+                                    statusArr.push('school admin');
+                                    needsUpdate = true;
+                                }
+
+                                if (needsUpdate) {
+                                    const notifRef = window.fbDoc(window.firebaseDB, "notifications", docSnap.id);
+                                    // إذا كانت محفوظة في الأساس كمصفوفة أرسلها كمصفوفة، وإلا كنص
+                                    let finalStatus = statusIsArray ? statusArr : statusArr.join(',');
+                                    await window.fbUpdateDoc(notifRef, { status: finalStatus });
+                                }
+                            }
+                        }
+                    });
+                }
+            } catch(e) { console.error("Error updating notifications collection", e); }
+
+            // التوافقية مع الإصدارات القديمة (إن وجدت)
             let updates = {};
-            if (ordersToClear.includes("10") && currentUser.unread10 > 0) updates.unread10 = 0;
-            if (ordersToClear.includes("20") && currentUser.unread20 > 0) updates.unread20 = 0;
-            if (ordersToClear.includes("25") && currentUser.unread25 > 0) updates.unread25 = 0;
             if (ordersToClear.includes("29") && currentUser.unread29 > 0) updates.unread29 = 0;
-            if (ordersToClear.includes("30") && currentUser.unread30 > 0) updates.unread30 = 0;
             if (ordersToClear.includes("31") && currentUser.unread31 > 0) updates.unread31 = 0;
 
             if (Object.keys(updates).length > 0) {
@@ -985,64 +1108,6 @@
                     await window.fbUpdateDoc(userDocRef, updates);
                 } catch(e) {}
             }
-        }
-
-        function handleMenuClick(item) {
-            saveNavState({ view: 'app', data: item }); 
-            clearNotifications(item); 
-            closeMenu();
-            
-            const titleToDisplay = currentLang === 'ar' && item.arName ? item.arName : item.name;
-            showLoader(true, langDict[currentLang].syncing);
-            document.getElementById('welcomeScreen').classList.add('hidden');
-            document.getElementById('mainContentArea').classList.remove('hidden');
-            document.getElementById('activePageTitle').textContent = titleToDisplay;
-            document.getElementById(`pane${activePane}Title`).textContent = titleToDisplay;
-            activeItems[activePane] = item;
-
-            const codeToLoad = currentLang === 'ar' && item.arCode ? item.arCode : item.code;
-            const finalCode = prepareIframeContent(codeToLoad);
-            const blob = new Blob([finalCode], { type: 'text/html' });
-            const frame = document.getElementById(`frame${activePane}`);
-            frame.src = URL.createObjectURL(blob);
-            frame.onload = () => showLoader(false);
-        }
-
-        async function performLogout() {
-            closeModal();
-            showLoader(true, "Signing Out..."); 
-            stopSilentPolling();
-            
-            try {
-                if (currentUser && currentUser.id) {
-                    const userDocRef = window.fbDoc(window.firebaseDB, "users", currentUser.id);
-                    await window.fbUpdateDoc(userDocRef, { deviceId: "" });
-                }
-            } catch (e) {}
-            
-            localStorage.removeItem('EDUZ_SAVED_USER');
-            currentUser = null;
-            activeItems = { 1: null, 2: null }; 
-            showLoader(false);
-
-            document.getElementById('dashboard').classList.add('hidden');
-            document.getElementById('loginPage').classList.remove('hidden');
-            toggleLoginForm(false);
-            
-            goToStep1();
-            document.getElementById('loginForm').reset();
-            document.title = "EDU-Z";
-            document.getElementById('activePageTitle').textContent = "EDU-Z"; 
-            
-            resetNavHistory(); 
-            
-            document.getElementById('frame1').src = "about:blank";
-            document.getElementById('frame2').src = "about:blank";
-            document.getElementById('dashboardWidgetFrame').src = "about:blank"; 
-            document.getElementById('mainContentArea').classList.add('hidden');
-            document.getElementById('welcomeScreen').classList.remove('hidden');
-
-            renderPublicLandingPage();
         }
 
         function renderAppWall(parentCategoryName = null) {
@@ -1096,12 +1161,13 @@
 
             let badgeHtml = '', badgeCount = 0;
             if (currentUser) {
-                if (String(item.order) === "10") badgeCount = currentUser.unread10 || 0;
-                if (String(item.order) === "20") badgeCount = currentUser.unread20 || 0;
-                if (String(item.order) === "25") badgeCount = currentUser.unread25 || 0;
-                if (String(item.order) === "29") badgeCount = currentUser.unread29 || 0;
-                if (String(item.order) === "30") badgeCount = currentUser.unread30 || 0;
-                if (String(item.order) === "31") badgeCount = currentUser.unread31 || 0;
+                const orderStr = String(item.order);
+                if (dynamicUnreadCounts[orderStr] !== undefined) {
+                    badgeCount = dynamicUnreadCounts[orderStr];
+                } else {
+                    if (orderStr === "29") badgeCount = currentUser.unread29 || 0;
+                    if (orderStr === "31") badgeCount = currentUser.unread31 || 0;
+                }
             }
             if (badgeCount > 0) { badgeHtml = `<div class="absolute top-1.5 end-1.5 sm:top-3 sm:end-3 bg-red-600 text-white text-[10px] sm:text-xs font-bold min-w-[22px] h-[22px] sm:min-w-[26px] sm:h-[26px] px-1.5 flex items-center justify-center rounded-full z-20 shadow-md border-2 border-white animate-bounce">${badgeCount}</div>`; }
 
@@ -1132,6 +1198,14 @@
                 return `<i data-lucide="${defaultIcon}" class="${sizeClass} ${colorClass}"></i>`;
             };
 
+            const checkOrder = (o) => {
+                const orderStr = String(o);
+                if (dynamicUnreadCounts[orderStr] !== undefined) return dynamicUnreadCounts[orderStr];
+                if (orderStr === "29") return currentUser.unread29 || 0;
+                if (orderStr === "31") return currentUser.unread31 || 0;
+                return 0;
+            };
+
             main.forEach(m => {
                 const sub = filtered.filter(i => i.type === `sub-${m.name}`);
                 const sid = `sid-${m.name.replace(/\s/g, '')}`;
@@ -1140,12 +1214,8 @@
 
                 let parentBadgeCount = 0;
                 if (currentUser) {
-                    if (String(m.order) === "10" || sub.some(s => String(s.order) === "10")) parentBadgeCount += (currentUser.unread10 || 0);
-                    if (String(m.order) === "20" || sub.some(s => String(s.order) === "20")) parentBadgeCount += (currentUser.unread20 || 0);
-                    if (String(m.order) === "25" || sub.some(s => String(s.order) === "25")) parentBadgeCount += (currentUser.unread25 || 0);
-                    if (String(m.order) === "29" || sub.some(s => String(s.order) === "29")) parentBadgeCount += (currentUser.unread29 || 0);
-                    if (String(m.order) === "30" || sub.some(s => String(s.order) === "30")) parentBadgeCount += (currentUser.unread30 || 0);
-                    if (String(m.order) === "31" || sub.some(s => String(s.order) === "31")) parentBadgeCount += (currentUser.unread31 || 0);
+                    parentBadgeCount += checkOrder(m.order);
+                    sub.forEach(s => { parentBadgeCount += checkOrder(s.order); });
                 }
                 
                 let parentBadgeHtml = '';
@@ -1166,12 +1236,7 @@
                                 const childIcon = getMenuIcon(s, 'file-text', 'w-3.5 h-3.5', 'text-slate-400');
                                 let childBadgeCount = 0;
                                 if (currentUser) {
-                                    if (String(s.order) === "10") childBadgeCount = currentUser.unread10 || 0;
-                                    if (String(s.order) === "20") childBadgeCount = currentUser.unread20 || 0;
-                                    if (String(s.order) === "25") childBadgeCount = currentUser.unread25 || 0;
-                                    if (String(s.order) === "29") childBadgeCount = currentUser.unread29 || 0;
-                                    if (String(s.order) === "30") childBadgeCount = currentUser.unread30 || 0;
-                                    if (String(s.order) === "31") childBadgeCount = currentUser.unread31 || 0;
+                                    childBadgeCount = checkOrder(s.order);
                                 }
                                 let childBadgeHtml = '';
                                 if (childBadgeCount > 0) childBadgeHtml = `<span class="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full ms-2 shadow-sm animate-pulse">${childBadgeCount}</span>`;
@@ -1190,6 +1255,27 @@
                 const el = document.getElementById(id);
                 if (el) { el.classList.add('open'); const chevron = el.previousElementSibling.querySelector('.lucide-chevron-down'); if (chevron) chevron.style.transform = 'rotate(180deg)'; }
             });
+        }
+
+        function handleMenuClick(item) {
+            saveNavState({ view: 'app', data: item }); 
+            clearNotifications(item); 
+            closeMenu();
+            
+            const titleToDisplay = currentLang === 'ar' && item.arName ? item.arName : item.name;
+            showLoader(true, langDict[currentLang].syncing);
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('mainContentArea').classList.remove('hidden');
+            document.getElementById('activePageTitle').textContent = titleToDisplay;
+            document.getElementById(`pane${activePane}Title`).textContent = titleToDisplay;
+            activeItems[activePane] = item;
+
+            const codeToLoad = currentLang === 'ar' && item.arCode ? item.arCode : item.code;
+            const finalCode = prepareIframeContent(codeToLoad);
+            const blob = new Blob([finalCode], { type: 'text/html' });
+            const frame = document.getElementById(`frame${activePane}`);
+            frame.src = URL.createObjectURL(blob);
+            frame.onload = () => showLoader(false);
         }
 
         async function refreshData() {
@@ -1233,6 +1319,7 @@
 
         function stopSilentPolling() {
             if (userUnsubscribe) { userUnsubscribe(); userUnsubscribe = null; }
+            if (notifUnsubscribe) { notifUnsubscribe(); notifUnsubscribe = null; }
         }
 
         function openVideoModal() {
@@ -1289,6 +1376,43 @@
                 el.style.fontSize = `${Math.random()*40+20}px`; el.style.animationDuration = `${Math.random()*15+15}s`; el.style.animationDelay = `${Math.random()*5}s`;
                 container.appendChild(el);
             }
+        }
+        
+        async function performLogout() {
+            closeModal();
+            showLoader(true, "Signing Out..."); 
+            stopSilentPolling();
+            
+            try {
+                if (currentUser && currentUser.id) {
+                    const userDocRef = window.fbDoc(window.firebaseDB, "users", currentUser.id);
+                    await window.fbUpdateDoc(userDocRef, { deviceId: "" });
+                }
+            } catch (e) {}
+            
+            localStorage.removeItem('EDUZ_SAVED_USER');
+            currentUser = null;
+            activeItems = { 1: null, 2: null }; 
+            showLoader(false);
+
+            document.getElementById('dashboard').classList.add('hidden');
+            document.getElementById('loginPage').classList.remove('hidden');
+            toggleLoginForm(false);
+            
+            goToStep1();
+            document.getElementById('loginForm').reset();
+            document.title = "EDU-Z";
+            document.getElementById('activePageTitle').textContent = "EDU-Z"; 
+            
+            resetNavHistory(); 
+            
+            document.getElementById('frame1').src = "about:blank";
+            document.getElementById('frame2').src = "about:blank";
+            document.getElementById('dashboardWidgetFrame').src = "about:blank"; 
+            document.getElementById('mainContentArea').classList.add('hidden');
+            document.getElementById('welcomeScreen').classList.remove('hidden');
+
+            renderPublicLandingPage();
         }
     </script>
 </body>
