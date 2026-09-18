@@ -208,6 +208,46 @@
         </div>
     </div>
 
+    <!-- Switcher Modal (Available to ALL users) -->
+    <div id="switcherModal" class="hidden fixed inset-0 z-[200] flex items-start justify-center p-4 pt-20 bg-slate-900/60 backdrop-blur-sm transition-all opacity-0">
+        <div class="bg-white rounded-3xl w-full max-w-md mx-auto shadow-2xl flex flex-col max-h-[80vh] overflow-hidden transform scale-95 transition-transform" id="switcherContent">
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-3xl shrink-0">
+                <h3 class="text-lg font-black text-slate-800 flex items-center gap-2">
+                    <i data-lucide="users" class="text-indigo-600"></i>
+                    <span id="lblSwitcherTitle">Switch Accounts</span>
+                </h3>
+                <button onclick="closeSwitcherModal()" class="w-8 h-8 rounded-full bg-white border border-slate-200 text-slate-500 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-colors">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            
+            <div class="p-5 overflow-y-auto custom-scrollbar flex-1 bg-slate-50" id="linkedAccountsContainer">
+                <!-- Linked Accounts injected here -->
+            </div>
+
+            <div class="p-5 border-t border-slate-200 bg-white rounded-b-3xl shrink-0">
+                <button onclick="toggleAddStudentForm()" id="btnToggleAddStudent" class="w-full py-3 bg-indigo-50 text-indigo-700 rounded-xl text-sm font-bold hover:bg-indigo-100 transition flex items-center justify-center gap-2 border border-indigo-200">
+                    <i data-lucide="user-plus" class="w-4 h-4"></i> <span id="lblAddStudentBtn">Add Another Account</span>
+                </button>
+
+                <form id="addStudentForm" class="hidden mt-4 space-y-4 animate-fade-in-up" onsubmit="linkNewStudent(event)">
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-500 ms-1 mb-1 block" id="lblLinkUser">Account Username</label>
+                        <input type="text" id="linkUsername" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all">
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-500 ms-1 mb-1 block" id="lblLinkPass">Password</label>
+                        <input type="password" id="linkPassword" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all">
+                    </div>
+                    <div id="linkErrorMsg" class="hidden text-xs text-red-500 font-bold text-center mt-2"></div>
+                    <button type="submit" id="btnSubmitLink" class="w-full py-3 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition shadow-md flex items-center justify-center gap-2 mt-2">
+                        <i data-lucide="link" class="w-4 h-4"></i> <span id="lblLinkSubmit">Link Account</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <div id="dashboard" class="hidden flex-1 w-full flex flex-col overflow-hidden bg-slate-50 sm:rounded-[2rem] rounded-xl shadow-2xl ring-1 ring-slate-200 relative">
         <header class="h-16 bg-white border-b flex items-center justify-between px-3 sm:px-4 shrink-0 z-[60] shadow-sm">
             <div class="flex items-center gap-3 sm:gap-4 relative w-full sm:w-auto">
@@ -240,6 +280,14 @@
             </div>
             
             <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                
+                <!-- Account Switcher Button (Available to ALL users now) -->
+                <button id="btnOpenSwitcher" onclick="openSwitcherModal()" class="flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-100 transition text-[10px] sm:text-[11px] font-bold border border-emerald-100 relative group">
+                    <i data-lucide="users" class="w-4 h-4 group-hover:scale-110 transition-transform"></i>
+                    <span id="lblSwitcherNav" class="hidden sm:inline">Switch</span>
+                    <span id="linkedAccountsCountBadge" class="absolute -top-1.5 -end-1.5 bg-rose-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white hidden"></span>
+                </button>
+
                 <button onclick="toggleLanguage()" class="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition text-[10px] sm:text-[11px] font-bold border border-indigo-100">
                     <i data-lucide="globe" class="w-4 h-4"></i>
                     <span id="langToggleTextDash" class="hidden sm:inline">عربي</span>
@@ -417,6 +465,9 @@
         let activeItems = { 1: null, 2: null };
         let isLoginFormOpen = false;
         
+        // Linked Accounts state
+        let linkedAccounts = [];
+        
         let userUnsubscribe = null; 
         let notifUnsubscribe = null;
         let dynamicUnreadCounts = { '10': 0, '20': 0, '25': 0, '30': 0, '39': 0 };
@@ -434,7 +485,16 @@
                 logoutMsg: "Are you sure you want to sign out?", refreshMsg: "Do you want to refresh all data?",
                 cancel: "Cancel", confirm: "Confirm", back: "Back", forward: "Forward",
                 homeBread: "Home", checking: "Checking Session...", signingIn: "Signing In...",
-                syncing: "Syncing Data...", wrongAuth: "Wrong username or password", langToggle: "عربي"
+                syncing: "Syncing Data...", wrongAuth: "Wrong username or password", langToggle: "عربي",
+                // Switcher Translations
+                switchAccount: "Switch",
+                switcherTitle: "Switch Accounts",
+                addStudentBtn: "Add Another Account",
+                linkUser: "Account Username",
+                linkPass: "Password",
+                linkSubmit: "Link Account",
+                switchActive: "Active",
+                switchAction: "Switch to"
             },
             ar: {
                 loginNav: "دخول", loginTitle: "مرحباً بعودتك", loginSub: "نظام المصادقة الآمن",
@@ -445,7 +505,16 @@
                 logoutMsg: "هل أنت متأكد أنك تريد تسجيل الخروج؟", refreshMsg: "هل تريد تحديث جميع البيانات؟",
                 cancel: "إلغاء", confirm: "تأكيد", back: "السابق", forward: "التالي",
                 homeBread: "الرئيسية", checking: "جاري التحقق...", signingIn: "جاري الدخول...",
-                syncing: "مزامنة البيانات...", wrongAuth: "اسم المستخدم أو كلمة المرور غير صحيحة", langToggle: "English"
+                syncing: "مزامنة البيانات...", wrongAuth: "اسم المستخدم أو كلمة المرور غير صحيحة", langToggle: "English",
+                // Switcher Translations
+                switchAccount: "تبديل",
+                switcherTitle: "تبديل الحسابات",
+                addStudentBtn: "إضافة حساب آخر",
+                linkUser: "اسم المستخدم للحساب الآخر",
+                linkPass: "كلمة المرور",
+                linkSubmit: "ربط الحساب",
+                switchActive: "نشط حالياً",
+                switchAction: "التبديل إلى"
             }
         };
 
@@ -489,6 +558,14 @@
             document.getElementById('langToggleTextDash').textContent = d.langToggle;
             document.getElementById('username').placeholder = currentLang === 'ar' ? 'أدخل اسم المستخدم' : 'Enter username';
             document.getElementById('password').placeholder = currentLang === 'ar' ? 'أدخل كلمة المرور' : 'Enter password';
+            
+            // Switcher UI Updates
+            if(document.getElementById('lblSwitcherNav')) document.getElementById('lblSwitcherNav').textContent = d.switchAccount;
+            if(document.getElementById('lblSwitcherTitle')) document.getElementById('lblSwitcherTitle').textContent = d.switcherTitle;
+            if(document.getElementById('lblAddStudentBtn')) document.getElementById('lblAddStudentBtn').textContent = d.addStudentBtn;
+            if(document.getElementById('lblLinkUser')) document.getElementById('lblLinkUser').textContent = d.linkUser;
+            if(document.getElementById('lblLinkPass')) document.getElementById('lblLinkPass').textContent = d.linkPass;
+            if(document.getElementById('lblLinkSubmit')) document.getElementById('lblLinkSubmit').textContent = d.linkSubmit;
         }
 
         function reloadActiveIframes() {
@@ -711,6 +788,13 @@
                     
                     if (savedUser && savedUser.deviceId === sig) {
                         currentUser = savedUser;
+                        
+                        // Load linked accounts from storage (always attempt to load)
+                        const savedLinkedStr = localStorage.getItem('EDUZ_LINKED_ACCOUNTS');
+                        if(savedLinkedStr) {
+                            try { linkedAccounts = JSON.parse(savedLinkedStr); } catch(e){}
+                        }
+                        
                         initDashboard();
                         return;
                     }
@@ -778,7 +862,7 @@
             }
         }
 
-        function goToStep2() {
+        window.goToStep2 = function() {
             const userVal = document.getElementById('username').value.trim();
             if(!userVal) { document.getElementById('username').focus(); return; }
             document.getElementById('displayUsername').textContent = userVal;
@@ -792,7 +876,7 @@
             }, 300);
         }
 
-        function goToStep1() {
+        window.goToStep1 = function() {
             const s1 = document.getElementById('loginStep1');
             const s2 = document.getElementById('loginStep2');
             
@@ -855,6 +939,17 @@
                         currentUser.allowedButtons = currentUser.allowedButtons.split(',').map(s=>s.trim());
                     }
                     
+                    // Add the primary logged-in user to linked accounts
+                    linkedAccounts = [{
+                        id: currentUser.id,
+                        username: currentUser.username,
+                        fullName: currentUser.fullName,
+                        password: currentUser.password,
+                        schoolName: currentUser.schoolName,
+                        userImageId: currentUser.userImageId
+                    }];
+                    localStorage.setItem('EDUZ_LINKED_ACCOUNTS', JSON.stringify(linkedAccounts));
+
                     localStorage.setItem('EDUZ_SAVED_USER', JSON.stringify(currentUser));
                     initDashboard();
                 } else {
@@ -883,6 +978,43 @@
             document.getElementById('headerUserName').textContent = currentUser.fullName || currentUser.username;
             document.getElementById('welcomeUserName').textContent = currentUser.fullName || currentUser.username;
             
+            // Switcher Visibility Logic
+            const switcherBtn = document.getElementById('btnOpenSwitcher');
+            switcherBtn.classList.remove('hidden');
+            
+            // Ensure current user is in linked array
+            if (linkedAccounts.length === 0) {
+                linkedAccounts = [{
+                    id: currentUser.id,
+                    username: currentUser.username,
+                    fullName: currentUser.fullName,
+                    password: currentUser.password,
+                    schoolName: currentUser.schoolName,
+                    userImageId: currentUser.userImageId
+                }];
+                localStorage.setItem('EDUZ_LINKED_ACCOUNTS', JSON.stringify(linkedAccounts));
+            }
+            
+            // Check if current user is missing from links
+            if (!linkedAccounts.find(acc => acc.username === currentUser.username)) {
+                linkedAccounts.push({
+                    id: currentUser.id,
+                    username: currentUser.username,
+                    fullName: currentUser.fullName,
+                    password: currentUser.password,
+                    schoolName: currentUser.schoolName,
+                    userImageId: currentUser.userImageId
+                });
+                localStorage.setItem('EDUZ_LINKED_ACCOUNTS', JSON.stringify(linkedAccounts));
+            }
+
+            if (linkedAccounts.length > 1) {
+                document.getElementById('linkedAccountsCountBadge').textContent = linkedAccounts.length;
+                document.getElementById('linkedAccountsCountBadge').classList.remove('hidden');
+            } else {
+                document.getElementById('linkedAccountsCountBadge').classList.add('hidden');
+            }
+
             resetNavHistory();
             
             const heroLogo = document.getElementById('heroLogo');
@@ -894,7 +1026,7 @@
             const heroDateEl = document.getElementById('heroDate');
             if (heroDateEl) heroDateEl.textContent = new Date().toLocaleDateString(currentLang === 'ar' ? 'ar-EG' : 'en-US', options);
             
-            document.getElementById('userImg').src = currentUser.userImageId ? `https://lh3.googleusercontent.com/u/0/d/${currentUser.userImageId}` : `https://ui-avatars.com/api/?name=${currentUser.fullName || 'User'}&background=random`;
+            document.getElementById('userImg').src = currentUser.userImageId ? `https://lh3.googleusercontent.com/u/0/d/${currentUser.userImageId}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.fullName || 'User')}&background=random`;
             document.title = `${currentUser.schoolName || 'EDU-Z'} - System`;
             
             renderMenu(); renderAppWall(); renderDashboardWidget(); showLoader(false);
@@ -906,7 +1038,6 @@
         function prepareIframeContent(code) {
             let finalCode = code || "<html><body>No Content</body></html>";
             
-            // 1. إزالة أي وسم title قديم لمنع التعارض
             finalCode = finalCode.replace(/<title>.*?<\/title>/gi, '');
             
             if (!finalCode.trim().toLowerCase().startsWith("<!doctype html>")) {
@@ -917,7 +1048,6 @@
             const errorSuppressor = "<script>window.addEventListener('error', function(e) { if (e.message && (e.message.includes('ResizeObserver') || e.message.includes('undelivered'))) { e.preventDefault(); e.stopImmediatePropagation(); } });<" + "/script>";
             const headPayload = dynamicDataTitle + errorSuppressor;
             
-            // 2. حقن البيانات بطريقة ذكية تتجاهل حالة الأحرف وأي خصائص أخرى داخل الوسم
             if (/<head[^>]*>/i.test(finalCode)) {
                 finalCode = finalCode.replace(/(<head[^>]*>)/i, `$1${headPayload}`);
             } else if (/<html[^>]*>/i.test(finalCode)) {
@@ -985,30 +1115,24 @@
 
                 if (!targetOrder) return; 
 
-                // تحويل بيانات المستخدمين إلى مصفوفة نظيفة سواء كانت نص أو مصفوفة فعلية
                 let usersField = data.users || [];
                 let usersArr = Array.isArray(usersField) ? usersField.map(s => String(s).trim()) : String(usersField).split(',').map(s => s.trim()).filter(Boolean);
 
-                // فحص المطابقة بناءً على اسم المستخدم العادي
                 let isNormalUser = usersArr.includes(currentUser.username);
                 
-                // فحص المطابقة الخاصة بـ school admin لإشعارات conc
                 let isUserTypeAdmin = (currentUser.userType === 'school admin' || currentUser.role === 'school admin');
                 let isAdminMatch = (type === 'conc' && isUserTypeAdmin && usersArr.includes('school admin'));
 
                 if (isNormalUser || isAdminMatch) {
-                    // تحويل بيانات حالة القراءة إلى مصفوفة نظيفة
                     let statusField = data.status || [];
                     let statusArr = Array.isArray(statusField) ? statusField.map(s => String(s).trim()) : String(statusField).split(',').map(s => s.trim()).filter(Boolean);
 
                     let hasSeen = false;
                     
-                    // إذا كان المستهدف هو اليوزر العادي، هل شاهدها؟
                     if (isNormalUser && statusArr.includes(currentUser.username)) {
                         hasSeen = true;
                     }
                     
-                    // إذا كان المستهدف هو الأدمن، هل شاهدها كأدمن؟
                     if (isAdminMatch && statusArr.includes('school admin')) {
                         hasSeen = true;
                     }
@@ -1019,7 +1143,6 @@
                 }
             });
 
-            // تحديث الواجهة فوراً
             renderMenu();
             const breadcrumb = document.getElementById('appWallBreadcrumb');
             if (breadcrumb && !breadcrumb.classList.contains('hidden')) {
@@ -1065,13 +1188,11 @@
                                 
                                 let needsUpdate = false;
                                 
-                                // إذا كان يوزراً عادياً ولم يشاهدها من قبل
                                 if (isNormalUser && !statusArr.includes(currentUser.username)) {
                                     statusArr.push(currentUser.username);
                                     needsUpdate = true;
                                 }
                                 
-                                // إذا كان أدمن ولم يشاهدها من قبل
                                 if (isAdminMatch && !statusArr.includes('school admin')) {
                                     statusArr.push('school admin');
                                     needsUpdate = true;
@@ -1079,7 +1200,6 @@
 
                                 if (needsUpdate) {
                                     const notifRef = window.fbDoc(window.firebaseDB, "notifications", docSnap.id);
-                                    // إذا كانت محفوظة في الأساس كمصفوفة أرسلها كمصفوفة، وإلا كنص
                                     let finalStatus = statusIsArray ? statusArr : statusArr.join(',');
                                     await window.fbUpdateDoc(notifRef, { status: finalStatus });
                                 }
@@ -1089,7 +1209,6 @@
                 }
             } catch(e) { console.error("Error updating notifications collection", e); }
 
-            // التوافقية مع الإصدارات القديمة (إن وجدت)
             let updates = {};
             if (ordersToClear.includes("29") && currentUser.unread29 > 0) updates.unread29 = 0;
             if (ordersToClear.includes("31") && currentUser.unread31 > 0) updates.unread31 = 0;
@@ -1286,8 +1405,17 @@
                     const userDocRef = window.fbDoc(window.firebaseDB, "users", currentUser.id);
                     const docSnap = await window.fbGetDoc(userDocRef);
                     if(docSnap.exists()) {
-                        currentUser = { id: docSnap.id, ...docSnap.data() };
+                        const deviceId = currentUser.deviceId; // keep local device id
+                        currentUser = { id: docSnap.id, ...docSnap.data(), deviceId };
                         if (typeof currentUser.allowedButtons === 'string') currentUser.allowedButtons = currentUser.allowedButtons.split(',').map(s=>s.trim());
+                        
+                        // Update in linked accounts if needed
+                        const accIndex = linkedAccounts.findIndex(a => a.id === currentUser.id);
+                        if(accIndex !== -1) {
+                            linkedAccounts[accIndex] = { ...linkedAccounts[accIndex], ...currentUser };
+                            localStorage.setItem('EDUZ_LINKED_ACCOUNTS', JSON.stringify(linkedAccounts));
+                        }
+
                         localStorage.setItem('EDUZ_SAVED_USER', JSON.stringify(currentUser));
                     }
                 }
@@ -1309,7 +1437,19 @@
                         if (docSnap.exists()) {
                             const updatedUser = { id: docSnap.id, ...docSnap.data() };
                             if (typeof updatedUser.allowedButtons === 'string') updatedUser.allowedButtons = updatedUser.allowedButtons.split(',').map(s=>s.trim());
+                            
+                            // Don't overwrite deviceId from snapshot if we have a valid one
+                            updatedUser.deviceId = currentUser.deviceId; 
+
                             Object.assign(currentUser, updatedUser);
+                            
+                            // Update linked list
+                            const accIndex = linkedAccounts.findIndex(a => a.id === currentUser.id);
+                            if(accIndex !== -1) {
+                                linkedAccounts[accIndex] = { ...linkedAccounts[accIndex], ...currentUser };
+                                localStorage.setItem('EDUZ_LINKED_ACCOUNTS', JSON.stringify(linkedAccounts));
+                            }
+
                             localStorage.setItem('EDUZ_SAVED_USER', JSON.stringify(currentUser));
                         }
                     }, (error) => {});
@@ -1331,7 +1471,7 @@
         function confirmAction(t) {
             closeMenu(); const m = document.getElementById('confirmModal'); document.getElementById('modalMsg').textContent = t === 'logout' ? langDict[currentLang].logoutMsg : langDict[currentLang].refreshMsg; document.getElementById('modalConfirmBtn').onclick = () => t === 'logout' ? performLogout() : refreshData(); m.classList.remove('hidden');
         }
-        function closeModal() { document.getElementById('confirmModal').classList.add('hidden'); }
+        window.closeModal = function() { document.getElementById('confirmModal').classList.add('hidden'); }
         
         function goToHomePage() { 
             resetNavHistory(); 
@@ -1348,7 +1488,7 @@
         function closeMenu() {
             isMenuOpen = false; document.getElementById('dropdownMenu').classList.replace('dropdown-visible', 'dropdown-hidden'); document.getElementById('menuOverlay').classList.add('hidden');
         }
-        function toggleSubmenu(id, btn) {
+        window.toggleSubmenu = function(id, btn) {
             const sub = document.getElementById(id); const isOpen = sub.classList.toggle('open'); const chevron = btn.querySelector('.lucide-chevron-down'); if (chevron) chevron.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
         }
         function toggleSplitMode() {
@@ -1390,7 +1530,11 @@
                 }
             } catch (e) {}
             
+            // Clear all linked accounts
+            linkedAccounts = [];
+            localStorage.removeItem('EDUZ_LINKED_ACCOUNTS');
             localStorage.removeItem('EDUZ_SAVED_USER');
+            
             currentUser = null;
             activeItems = { 1: null, 2: null }; 
             showLoader(false);
@@ -1414,6 +1558,203 @@
 
             renderPublicLandingPage();
         }
+
+        // ==========================================
+        // Multi-Account Switcher Logic
+        // ==========================================
+        
+        window.openSwitcherModal = function() {
+            const modal = document.getElementById('switcherModal');
+            const content = document.getElementById('switcherContent');
+            
+            renderLinkedAccounts();
+            
+            document.getElementById('addStudentForm').classList.add('hidden');
+            document.getElementById('btnToggleAddStudent').classList.remove('hidden');
+            document.getElementById('linkErrorMsg').classList.add('hidden');
+            
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            }, 10);
+        }
+
+        window.closeSwitcherModal = function() {
+            const modal = document.getElementById('switcherModal');
+            const content = document.getElementById('switcherContent');
+            
+            modal.classList.add('opacity-0');
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+            
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+
+        window.toggleAddStudentForm = function() {
+            document.getElementById('addStudentForm').classList.remove('hidden');
+            document.getElementById('btnToggleAddStudent').classList.add('hidden');
+            document.getElementById('linkUsername').focus();
+        }
+
+        function renderLinkedAccounts() {
+            const container = document.getElementById('linkedAccountsContainer');
+            const d = langDict[currentLang];
+            
+            container.innerHTML = linkedAccounts.map(acc => {
+                const isActive = acc.username === currentUser.username;
+                const imgUrl = acc.userImageId ? `https://lh3.googleusercontent.com/u/0/d/${acc.userImageId}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(acc.fullName || acc.username)}&background=random`;
+                
+                const activeBadge = isActive 
+                    ? `<span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-200 shadow-sm">${d.switchActive}</span>`
+                    : '';
+                    
+                const actionBtn = isActive
+                    ? ''
+                    : `<button onclick="switchAccount('${acc.username}')" class="bg-white hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 text-indigo-600 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm flex items-center gap-1.5 shrink-0"><i data-lucide="repeat" class="w-3.5 h-3.5"></i> <span class="hidden sm:inline">${d.switchAction}</span></button>`;
+
+                return `
+                    <div class="bg-white p-3 rounded-2xl border ${isActive ? 'border-emerald-400 ring-2 ring-emerald-100' : 'border-slate-200 hover:border-indigo-300'} mb-3 flex items-center justify-between gap-3 shadow-sm transition-all">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <img src="${imgUrl}" class="w-10 h-10 rounded-xl object-cover shrink-0 border border-slate-100">
+                            <div class="flex flex-col min-w-0 text-start">
+                                <span class="font-bold text-slate-800 text-sm truncate flex items-center gap-2">${acc.fullName} ${activeBadge}</span>
+                                <span class="text-[10px] text-slate-500 font-mono" dir="ltr">@${acc.username}</span>
+                            </div>
+                        </div>
+                        ${actionBtn}
+                    </div>
+                `;
+            }).join('');
+            
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        window.linkNewStudent = async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmitLink');
+            const errorMsg = document.getElementById('linkErrorMsg');
+            const rawUser = document.getElementById('linkUsername').value.trim();
+            const pass = document.getElementById('linkPassword').value.trim();
+            const d = langDict[currentLang];
+            
+            errorMsg.classList.add('hidden');
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> ${d.checking}...`;
+            btn.disabled = true;
+            
+            try {
+                const usersRef = window.fbCollection(window.firebaseDB, "users");
+                let q = window.fbQuery(usersRef, window.fbWhere("username", "==", rawUser), window.fbLimit(1));
+                
+                let snap = await window.fbGetDocs(q);
+                if (snap.empty) {
+                    q = window.fbQuery(usersRef, window.fbWhere("username", "==", rawUser.toLowerCase()), window.fbLimit(1));
+                    snap = await window.fbGetDocs(q);
+                }
+
+                let validDoc = null;
+                if (!snap.empty) {
+                    const docItem = snap.docs[0];
+                    const dbPass = String(docItem.data().password || "").trim();
+                    if (dbPass === pass || dbPass.toLowerCase() === pass.toLowerCase()) {
+                        validDoc = docItem;
+                    }
+                }
+
+                if (validDoc) {
+                    const data = validDoc.data();
+                    
+                    if (data.schoolName !== currentUser.schoolName) {
+                        errorMsg.textContent = "Cannot link accounts from different schools.";
+                        errorMsg.classList.remove('hidden');
+                    } else if (linkedAccounts.find(a => a.username === data.username)) {
+                        errorMsg.textContent = "This account is already linked.";
+                        errorMsg.classList.remove('hidden');
+                    } else {
+                        // Success - Add to linked array
+                        linkedAccounts.push({
+                            id: validDoc.id,
+                            username: data.username,
+                            fullName: data.fullName || data.firstName || data.username,
+                            password: data.password,
+                            schoolName: data.schoolName,
+                            userImageId: data.photoId || data.userImageId || ''
+                        });
+                        
+                        localStorage.setItem('EDUZ_LINKED_ACCOUNTS', JSON.stringify(linkedAccounts));
+                        document.getElementById('linkedAccountsCountBadge').textContent = linkedAccounts.length;
+                        document.getElementById('linkedAccountsCountBadge').classList.remove('hidden');
+                        
+                        document.getElementById('addStudentForm').reset();
+                        document.getElementById('addStudentForm').classList.add('hidden');
+                        document.getElementById('btnToggleAddStudent').classList.remove('hidden');
+                        
+                        renderLinkedAccounts();
+                    }
+                } else {
+                    errorMsg.textContent = d.wrongAuth;
+                    errorMsg.classList.remove('hidden');
+                }
+            } catch(e) {
+                errorMsg.textContent = "Connection error. Please try again.";
+                errorMsg.classList.remove('hidden');
+            }
+            
+            btn.innerHTML = `<i data-lucide="link" class="w-4 h-4"></i> <span id="lblLinkSubmit">${d.linkSubmit}</span>`;
+            btn.disabled = false;
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        window.switchAccount = async function(targetUsername) {
+            const targetAcc = linkedAccounts.find(a => a.username === targetUsername);
+            if (!targetAcc) return;
+            
+            closeSwitcherModal();
+            showLoader(true, langDict[currentLang].signingIn);
+            stopSilentPolling();
+            
+            try {
+                // Fetch full data for target user
+                const usersRef = window.fbCollection(window.firebaseDB, "users");
+                const q = window.fbQuery(usersRef, window.fbWhere("username", "==", targetAcc.username), window.fbLimit(1));
+                const snap = await window.fbGetDocs(q);
+                
+                if (!snap.empty) {
+                    const docItem = snap.docs[0];
+                    const sig = await getDeviceSignature();
+                    
+                    // Update device ID for new active user
+                    await window.fbUpdateDoc(window.fbDoc(window.firebaseDB, "users", docItem.id), { deviceId: sig });
+                    
+                    currentUser = { id: docItem.id, ...docItem.data(), deviceId: sig };
+                    if (typeof currentUser.allowedButtons === 'string') {
+                        currentUser.allowedButtons = currentUser.allowedButtons.split(',').map(s=>s.trim());
+                    }
+                    
+                    localStorage.setItem('EDUZ_SAVED_USER', JSON.stringify(currentUser));
+                    
+                    // Full UI Reset & Re-init
+                    document.getElementById('frame1').src = "about:blank";
+                    document.getElementById('frame2').src = "about:blank";
+                    activeItems = { 1: null, 2: null }; 
+                    
+                    initDashboard();
+                    
+                    // Force navigation to Home page
+                    goToHomePage();
+                    
+                } else {
+                    Swal.fire('Error', 'Account data could not be retrieved.', 'error');
+                    showLoader(false);
+                }
+            } catch(e) {
+                console.error(e);
+                Swal.fire('Error', 'Failed to switch accounts.', 'error');
+                showLoader(false);
+            }
+        }
+
     </script>
 </body>
 </html>
