@@ -72,6 +72,7 @@
         </div>
     </div>
 
+    <!-- Confirm Modal -->
     <div id="confirmModal" class="hidden fixed inset-0 z-[200] flex items-start justify-center p-4 pt-24 bg-slate-900/60 backdrop-blur-sm">
         <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full mx-4 sm:mx-0 shadow-2xl scale-in transform transition-all">
             <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -86,6 +87,47 @@
         </div>
     </div>
 
+    <!-- Switcher Modal -->
+    <div id="switcherModal" class="hidden fixed inset-0 z-[200] flex items-start justify-center p-4 pt-20 bg-slate-900/60 backdrop-blur-sm transition-all opacity-0">
+        <div class="bg-white rounded-3xl w-full max-w-md mx-auto shadow-2xl flex flex-col max-h-[80vh] overflow-hidden transform scale-95 transition-transform" id="switcherContent">
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-3xl">
+                <h3 class="text-lg font-black text-slate-800 flex items-center gap-2">
+                    <i data-lucide="users" class="text-indigo-600"></i>
+                    <span id="lblSwitcherTitle">Switch Accounts</span>
+                </h3>
+                <button onclick="closeSwitcherModal()" class="w-8 h-8 rounded-full bg-white border border-slate-200 text-slate-500 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-colors">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            
+            <div class="p-5 overflow-y-auto custom-scrollbar flex-1 bg-slate-50" id="linkedAccountsContainer">
+                <!-- Linked Accounts injected here -->
+            </div>
+
+            <div class="p-5 border-t border-slate-200 bg-white rounded-b-3xl">
+                <button onclick="toggleAddStudentForm()" id="btnToggleAddStudent" class="w-full py-3 bg-indigo-50 text-indigo-700 rounded-xl text-sm font-bold hover:bg-indigo-100 transition flex items-center justify-center gap-2 border border-indigo-200">
+                    <i data-lucide="user-plus" class="w-4 h-4"></i> <span id="lblAddStudentBtn">Add Another Account</span>
+                </button>
+
+                <form id="addStudentForm" class="hidden mt-4 space-y-4 animate-fade-in-up" onsubmit="linkNewStudent(event)">
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-500 ms-1 mb-1 block" id="lblLinkUser">Account Username</label>
+                        <input type="text" id="linkUsername" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all">
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-500 ms-1 mb-1 block" id="lblLinkPass">Password</label>
+                        <input type="password" id="linkPassword" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all">
+                    </div>
+                    <div id="linkErrorMsg" class="hidden text-xs text-red-500 font-bold text-center mt-2"></div>
+                    <button type="submit" id="btnSubmitLink" class="w-full py-3 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition shadow-md flex items-center justify-center gap-2 mt-2">
+                        <i data-lucide="link" class="w-4 h-4"></i> <span id="lblLinkSubmit">Link Account</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Video Modal -->
     <div id="videoModal" class="fixed inset-0 z-[200] flex items-start justify-center bg-slate-900/80 backdrop-blur-md hidden opacity-0 transition-all duration-300 pt-16 sm:pt-24 px-4 overflow-y-auto">
         <div class="w-full max-w-2xl relative transform scale-95 transition-all duration-300" id="videoContainer">
             <div class="flex items-center justify-between mb-3 bg-white/10 p-2 px-4 rounded-2xl backdrop-blur-md border border-white/10">
@@ -204,46 +246,6 @@
                         </div>
                     </form>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Switcher Modal (Available to ALL users) -->
-    <div id="switcherModal" class="hidden fixed inset-0 z-[200] flex items-start justify-center p-4 pt-20 bg-slate-900/60 backdrop-blur-sm transition-all opacity-0">
-        <div class="bg-white rounded-3xl w-full max-w-md mx-auto shadow-2xl flex flex-col max-h-[80vh] overflow-hidden transform scale-95 transition-transform" id="switcherContent">
-            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-3xl shrink-0">
-                <h3 class="text-lg font-black text-slate-800 flex items-center gap-2">
-                    <i data-lucide="users" class="text-indigo-600"></i>
-                    <span id="lblSwitcherTitle">Switch Accounts</span>
-                </h3>
-                <button onclick="closeSwitcherModal()" class="w-8 h-8 rounded-full bg-white border border-slate-200 text-slate-500 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-colors">
-                    <i data-lucide="x" class="w-4 h-4"></i>
-                </button>
-            </div>
-            
-            <div class="p-5 overflow-y-auto custom-scrollbar flex-1 bg-slate-50" id="linkedAccountsContainer">
-                <!-- Linked Accounts injected here -->
-            </div>
-
-            <div class="p-5 border-t border-slate-200 bg-white rounded-b-3xl shrink-0">
-                <button onclick="toggleAddStudentForm()" id="btnToggleAddStudent" class="w-full py-3 bg-indigo-50 text-indigo-700 rounded-xl text-sm font-bold hover:bg-indigo-100 transition flex items-center justify-center gap-2 border border-indigo-200">
-                    <i data-lucide="user-plus" class="w-4 h-4"></i> <span id="lblAddStudentBtn">Add Another Account</span>
-                </button>
-
-                <form id="addStudentForm" class="hidden mt-4 space-y-4 animate-fade-in-up" onsubmit="linkNewStudent(event)">
-                    <div>
-                        <label class="text-[11px] font-bold text-slate-500 ms-1 mb-1 block" id="lblLinkUser">Account Username</label>
-                        <input type="text" id="linkUsername" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all">
-                    </div>
-                    <div>
-                        <label class="text-[11px] font-bold text-slate-500 ms-1 mb-1 block" id="lblLinkPass">Password</label>
-                        <input type="password" id="linkPassword" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all">
-                    </div>
-                    <div id="linkErrorMsg" class="hidden text-xs text-red-500 font-bold text-center mt-2"></div>
-                    <button type="submit" id="btnSubmitLink" class="w-full py-3 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition shadow-md flex items-center justify-center gap-2 mt-2">
-                        <i data-lucide="link" class="w-4 h-4"></i> <span id="lblLinkSubmit">Link Account</span>
-                    </button>
-                </form>
             </div>
         </div>
     </div>
@@ -939,15 +941,31 @@
                         currentUser.allowedButtons = currentUser.allowedButtons.split(',').map(s=>s.trim());
                     }
                     
-                    // Add the primary logged-in user to linked accounts
-                    linkedAccounts = [{
-                        id: currentUser.id,
-                        username: currentUser.username,
-                        fullName: currentUser.fullName,
-                        password: currentUser.password,
-                        schoolName: currentUser.schoolName,
-                        userImageId: currentUser.userImageId
-                    }];
+                    // --- 🆕 Update Linked Accounts correctly ---
+                    // 1. Load existing
+                    const savedLinkedStr = localStorage.getItem('EDUZ_LINKED_ACCOUNTS');
+                    if(savedLinkedStr) {
+                        try { linkedAccounts = JSON.parse(savedLinkedStr); } catch(e){ linkedAccounts = []; }
+                    } else {
+                        linkedAccounts = [];
+                    }
+                    
+                    // 2. Add or Update the current user
+                    const idx = linkedAccounts.findIndex(a => a.username === currentUser.username);
+                    if (idx === -1) {
+                        linkedAccounts.push({
+                            id: currentUser.id,
+                            username: currentUser.username,
+                            fullName: currentUser.fullName,
+                            password: currentUser.password,
+                            schoolName: currentUser.schoolName,
+                            userImageId: currentUser.userImageId
+                        });
+                    } else {
+                        linkedAccounts[idx].password = currentUser.password;
+                        linkedAccounts[idx].userImageId = currentUser.userImageId;
+                    }
+                    
                     localStorage.setItem('EDUZ_LINKED_ACCOUNTS', JSON.stringify(linkedAccounts));
 
                     localStorage.setItem('EDUZ_SAVED_USER', JSON.stringify(currentUser));
@@ -1405,7 +1423,7 @@
                     const userDocRef = window.fbDoc(window.firebaseDB, "users", currentUser.id);
                     const docSnap = await window.fbGetDoc(userDocRef);
                     if(docSnap.exists()) {
-                        const deviceId = currentUser.deviceId; // keep local device id
+                        const deviceId = currentUser.deviceId; 
                         currentUser = { id: docSnap.id, ...docSnap.data(), deviceId };
                         if (typeof currentUser.allowedButtons === 'string') currentUser.allowedButtons = currentUser.allowedButtons.split(',').map(s=>s.trim());
                         
@@ -1438,7 +1456,6 @@
                             const updatedUser = { id: docSnap.id, ...docSnap.data() };
                             if (typeof updatedUser.allowedButtons === 'string') updatedUser.allowedButtons = updatedUser.allowedButtons.split(',').map(s=>s.trim());
                             
-                            // Don't overwrite deviceId from snapshot if we have a valid one
                             updatedUser.deviceId = currentUser.deviceId; 
 
                             Object.assign(currentUser, updatedUser);
@@ -1530,9 +1547,7 @@
                 }
             } catch (e) {}
             
-            // Clear all linked accounts
-            linkedAccounts = [];
-            localStorage.removeItem('EDUZ_LINKED_ACCOUNTS');
+            // التعديل: لا نقوم بمسح الحسابات المرتبطة، فقط نمسح اليوزر النشط
             localStorage.removeItem('EDUZ_SAVED_USER');
             
             currentUser = null;
@@ -1741,7 +1756,7 @@
                     
                     initDashboard();
                     
-                    // Force navigation to Home page
+                    // التعديل: إجبار النظام على العودة للصفحة الرئيسية دائماً عند تبديل الحساب
                     goToHomePage();
                     
                 } else {
