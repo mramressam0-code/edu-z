@@ -90,7 +90,7 @@
     <!-- Switcher Modal -->
     <div id="switcherModal" class="hidden fixed inset-0 z-[200] flex items-start justify-center p-4 pt-20 bg-slate-900/60 backdrop-blur-sm transition-all opacity-0">
         <div class="bg-white rounded-3xl w-full max-w-md mx-auto shadow-2xl flex flex-col max-h-[80vh] overflow-hidden transform scale-95 transition-transform" id="switcherContent">
-            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-3xl">
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-3xl shrink-0">
                 <h3 class="text-lg font-black text-slate-800 flex items-center gap-2">
                     <i data-lucide="users" class="text-indigo-600"></i>
                     <span id="lblSwitcherTitle">Switch Accounts</span>
@@ -104,7 +104,7 @@
                 <!-- Linked Accounts injected here -->
             </div>
 
-            <div class="p-5 border-t border-slate-200 bg-white rounded-b-3xl">
+            <div class="p-5 border-t border-slate-200 bg-white rounded-b-3xl shrink-0">
                 <button onclick="toggleAddStudentForm()" id="btnToggleAddStudent" class="w-full py-3 bg-indigo-50 text-indigo-700 rounded-xl text-sm font-bold hover:bg-indigo-100 transition flex items-center justify-center gap-2 border border-indigo-200">
                     <i data-lucide="user-plus" class="w-4 h-4"></i> <span id="lblAddStudentBtn">Add Another Account</span>
                 </button>
@@ -283,7 +283,7 @@
             
             <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 
-                <!-- Account Switcher Button (Available to ALL users now) -->
+                <!-- Account Switcher Button (Available to ALL users) -->
                 <button id="btnOpenSwitcher" onclick="openSwitcherModal()" class="flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-100 transition text-[10px] sm:text-[11px] font-bold border border-emerald-100 relative group">
                     <i data-lucide="users" class="w-4 h-4 group-hover:scale-110 transition-transform"></i>
                     <span id="lblSwitcherNav" class="hidden sm:inline">Switch</span>
@@ -467,7 +467,7 @@
         let activeItems = { 1: null, 2: null };
         let isLoginFormOpen = false;
         
-        // Linked Accounts state
+        // Linked Accounts state (now dynamically loaded from DB)
         let linkedAccounts = [];
         
         let userUnsubscribe = null; 
@@ -496,7 +496,10 @@
                 linkPass: "Password",
                 linkSubmit: "Link Account",
                 switchActive: "Active",
-                switchAction: "Switch to"
+                switchAction: "Switch to",
+                removeAccount: "Remove",
+                removeConfirmTitle: "Remove Account",
+                removeConfirmMsg: "Are you sure you want to remove this account?"
             },
             ar: {
                 loginNav: "دخول", loginTitle: "مرحباً بعودتك", loginSub: "نظام المصادقة الآمن",
@@ -516,7 +519,10 @@
                 linkPass: "كلمة المرور",
                 linkSubmit: "ربط الحساب",
                 switchActive: "نشط حالياً",
-                switchAction: "التبديل إلى"
+                switchAction: "التبديل إلى",
+                removeAccount: "إزالة",
+                removeConfirmTitle: "إزالة الحساب",
+                removeConfirmMsg: "هل أنت متأكد أنك تريد إزالة هذا الحساب من القائمة؟"
             }
         };
 
@@ -561,7 +567,6 @@
             document.getElementById('username').placeholder = currentLang === 'ar' ? 'أدخل اسم المستخدم' : 'Enter username';
             document.getElementById('password').placeholder = currentLang === 'ar' ? 'أدخل كلمة المرور' : 'Enter password';
             
-            // Switcher UI Updates
             if(document.getElementById('lblSwitcherNav')) document.getElementById('lblSwitcherNav').textContent = d.switchAccount;
             if(document.getElementById('lblSwitcherTitle')) document.getElementById('lblSwitcherTitle').textContent = d.switcherTitle;
             if(document.getElementById('lblAddStudentBtn')) document.getElementById('lblAddStudentBtn').textContent = d.addStudentBtn;
@@ -772,7 +777,7 @@
                 snapshot.forEach(doc => { menu.push(doc.data()); });
                 return menu;
             } catch(e) { 
-                console.warn("Firestore menu load warning (fallback active):", e);
+                console.warn("Firestore menu load warning:", e);
                 return []; 
             }
         }
@@ -791,10 +796,11 @@
                     if (savedUser && savedUser.deviceId === sig) {
                         currentUser = savedUser;
                         
-                        // Load linked accounts from storage (always attempt to load)
-                        const savedLinkedStr = localStorage.getItem('EDUZ_LINKED_ACCOUNTS');
-                        if(savedLinkedStr) {
-                            try { linkedAccounts = JSON.parse(savedLinkedStr); } catch(e){}
+                        // Load linked accounts securely from database structure stored in memory or fallback to init
+                        if (currentUser.linkedAccounts && Array.isArray(currentUser.linkedAccounts)) {
+                            linkedAccounts = currentUser.linkedAccounts;
+                        } else {
+                            linkedAccounts = [];
                         }
                         
                         initDashboard();
@@ -941,32 +947,12 @@
                         currentUser.allowedButtons = currentUser.allowedButtons.split(',').map(s=>s.trim());
                     }
                     
-                    // --- 🆕 Update Linked Accounts correctly ---
-                    // 1. Load existing
-                    const savedLinkedStr = localStorage.getItem('EDUZ_LINKED_ACCOUNTS');
-                    if(savedLinkedStr) {
-                        try { linkedAccounts = JSON.parse(savedLinkedStr); } catch(e){ linkedAccounts = []; }
+                    // --- Load linkedAccounts from DB (if exists) ---
+                    if (currentUser.linkedAccounts && Array.isArray(currentUser.linkedAccounts)) {
+                        linkedAccounts = currentUser.linkedAccounts;
                     } else {
                         linkedAccounts = [];
                     }
-                    
-                    // 2. Add or Update the current user
-                    const idx = linkedAccounts.findIndex(a => a.username === currentUser.username);
-                    if (idx === -1) {
-                        linkedAccounts.push({
-                            id: currentUser.id,
-                            username: currentUser.username,
-                            fullName: currentUser.fullName,
-                            password: currentUser.password,
-                            schoolName: currentUser.schoolName,
-                            userImageId: currentUser.userImageId
-                        });
-                    } else {
-                        linkedAccounts[idx].password = currentUser.password;
-                        linkedAccounts[idx].userImageId = currentUser.userImageId;
-                    }
-                    
-                    localStorage.setItem('EDUZ_LINKED_ACCOUNTS', JSON.stringify(linkedAccounts));
 
                     localStorage.setItem('EDUZ_SAVED_USER', JSON.stringify(currentUser));
                     initDashboard();
@@ -996,24 +982,10 @@
             document.getElementById('headerUserName').textContent = currentUser.fullName || currentUser.username;
             document.getElementById('welcomeUserName').textContent = currentUser.fullName || currentUser.username;
             
-            // Switcher Visibility Logic
             const switcherBtn = document.getElementById('btnOpenSwitcher');
             switcherBtn.classList.remove('hidden');
             
-            // Ensure current user is in linked array
-            if (linkedAccounts.length === 0) {
-                linkedAccounts = [{
-                    id: currentUser.id,
-                    username: currentUser.username,
-                    fullName: currentUser.fullName,
-                    password: currentUser.password,
-                    schoolName: currentUser.schoolName,
-                    userImageId: currentUser.userImageId
-                }];
-                localStorage.setItem('EDUZ_LINKED_ACCOUNTS', JSON.stringify(linkedAccounts));
-            }
-            
-            // Check if current user is missing from links
+            // Ensure current user is inside the linkedAccounts array dynamically (sync with DB)
             if (!linkedAccounts.find(acc => acc.username === currentUser.username)) {
                 linkedAccounts.push({
                     id: currentUser.id,
@@ -1021,9 +993,16 @@
                     fullName: currentUser.fullName,
                     password: currentUser.password,
                     schoolName: currentUser.schoolName,
-                    userImageId: currentUser.userImageId
+                    userImageId: currentUser.userImageId || ''
                 });
-                localStorage.setItem('EDUZ_LINKED_ACCOUNTS', JSON.stringify(linkedAccounts));
+                
+                currentUser.linkedAccounts = linkedAccounts;
+                // Update DB silently with the new self-link
+                window.fbUpdateDoc(window.fbDoc(window.firebaseDB, "users", currentUser.id), {
+                    linkedAccounts: linkedAccounts
+                }).catch(e=>{});
+                
+                localStorage.setItem('EDUZ_SAVED_USER', JSON.stringify(currentUser));
             }
 
             if (linkedAccounts.length > 1) {
@@ -1431,7 +1410,11 @@
                         const accIndex = linkedAccounts.findIndex(a => a.id === currentUser.id);
                         if(accIndex !== -1) {
                             linkedAccounts[accIndex] = { ...linkedAccounts[accIndex], ...currentUser };
-                            localStorage.setItem('EDUZ_LINKED_ACCOUNTS', JSON.stringify(linkedAccounts));
+                            
+                            currentUser.linkedAccounts = linkedAccounts;
+                            window.fbUpdateDoc(window.fbDoc(window.firebaseDB, "users", currentUser.id), {
+                                linkedAccounts: linkedAccounts
+                            }).catch(e=>{});
                         }
 
                         localStorage.setItem('EDUZ_SAVED_USER', JSON.stringify(currentUser));
@@ -1460,11 +1443,14 @@
 
                             Object.assign(currentUser, updatedUser);
                             
-                            // Update linked list
-                            const accIndex = linkedAccounts.findIndex(a => a.id === currentUser.id);
-                            if(accIndex !== -1) {
-                                linkedAccounts[accIndex] = { ...linkedAccounts[accIndex], ...currentUser };
-                                localStorage.setItem('EDUZ_LINKED_ACCOUNTS', JSON.stringify(linkedAccounts));
+                            if (updatedUser.linkedAccounts && Array.isArray(updatedUser.linkedAccounts)) {
+                                linkedAccounts = updatedUser.linkedAccounts;
+                                if (linkedAccounts.length > 1) {
+                                    document.getElementById('linkedAccountsCountBadge').textContent = linkedAccounts.length;
+                                    document.getElementById('linkedAccountsCountBadge').classList.remove('hidden');
+                                } else {
+                                    document.getElementById('linkedAccountsCountBadge').classList.add('hidden');
+                                }
                             }
 
                             localStorage.setItem('EDUZ_SAVED_USER', JSON.stringify(currentUser));
@@ -1547,7 +1533,6 @@
                 }
             } catch (e) {}
             
-            // التعديل: لا نقوم بمسح الحسابات المرتبطة، فقط نمسح اليوزر النشط
             localStorage.removeItem('EDUZ_SAVED_USER');
             
             currentUser = null;
@@ -1575,7 +1560,7 @@
         }
 
         // ==========================================
-        // Multi-Account Switcher Logic
+        // Multi-Account Switcher Logic (Now synced with Firestore)
         // ==========================================
         
         window.openSwitcherModal = function() {
@@ -1629,6 +1614,10 @@
                     ? ''
                     : `<button onclick="switchAccount('${acc.username}')" class="bg-white hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 text-indigo-600 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm flex items-center gap-1.5 shrink-0"><i data-lucide="repeat" class="w-3.5 h-3.5"></i> <span class="hidden sm:inline">${d.switchAction}</span></button>`;
 
+                const removeBtn = isActive 
+                    ? '' 
+                    : `<button onclick="removeLinkedAccount('${acc.username}')" class="bg-white hover:bg-red-50 border border-slate-200 hover:border-red-300 text-red-500 w-8 h-8 rounded-lg flex items-center justify-center transition shadow-sm shrink-0" title="${d.removeAccount}"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
+
                 return `
                     <div class="bg-white p-3 rounded-2xl border ${isActive ? 'border-emerald-400 ring-2 ring-emerald-100' : 'border-slate-200 hover:border-indigo-300'} mb-3 flex items-center justify-between gap-3 shadow-sm transition-all">
                         <div class="flex items-center gap-3 min-w-0">
@@ -1638,12 +1627,67 @@
                                 <span class="text-[10px] text-slate-500 font-mono" dir="ltr">@${acc.username}</span>
                             </div>
                         </div>
-                        ${actionBtn}
+                        <div class="flex items-center gap-1.5">
+                            ${removeBtn}
+                            ${actionBtn}
+                        </div>
                     </div>
                 `;
             }).join('');
             
             if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        window.removeLinkedAccount = async function(targetUsername) {
+            const d = langDict[currentLang];
+            const res = await Swal.fire({
+                title: d.removeConfirmTitle,
+                text: d.removeConfirmMsg,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: d.confirm,
+                cancelButtonText: d.cancel
+            });
+
+            if (res.isConfirmed) {
+                // Remove from current user's array in memory
+                linkedAccounts = linkedAccounts.filter(a => a.username !== targetUsername);
+                currentUser.linkedAccounts = linkedAccounts;
+                
+                // Update Firestore for current user
+                try {
+                    await window.fbUpdateDoc(window.fbDoc(window.firebaseDB, "users", currentUser.id), {
+                        linkedAccounts: linkedAccounts
+                    });
+                } catch(e) {}
+                
+                // Update Badge UI
+                if (linkedAccounts.length > 1) {
+                    document.getElementById('linkedAccountsCountBadge').textContent = linkedAccounts.length;
+                    document.getElementById('linkedAccountsCountBadge').classList.remove('hidden');
+                } else {
+                    document.getElementById('linkedAccountsCountBadge').classList.add('hidden');
+                }
+                
+                renderLinkedAccounts();
+
+                // Bi-directional removal: Remove current user from the target user's linkedAccounts in Firestore
+                try {
+                    const usersRef = window.fbCollection(window.firebaseDB, "users");
+                    const q = window.fbQuery(usersRef, window.fbWhere("username", "==", targetUsername), window.fbLimit(1));
+                    const snap = await window.fbGetDocs(q);
+                    if (!snap.empty) {
+                        const targetDoc = snap.docs[0];
+                        let targetLinked = targetDoc.data().linkedAccounts || [];
+                        targetLinked = targetLinked.filter(a => a.username !== currentUser.username);
+                        await window.fbUpdateDoc(window.fbDoc(window.firebaseDB, "users", targetDoc.id), {
+                            linkedAccounts: targetLinked
+                        });
+                    }
+                } catch(e) {}
+            }
         }
 
         window.linkNewStudent = async function(e) {
@@ -1678,26 +1722,50 @@
                 }
 
                 if (validDoc) {
-                    const data = validDoc.data();
+                    const targetData = validDoc.data();
                     
-                    if (data.schoolName !== currentUser.schoolName) {
+                    if (targetData.schoolName !== currentUser.schoolName) {
                         errorMsg.textContent = "Cannot link accounts from different schools.";
                         errorMsg.classList.remove('hidden');
-                    } else if (linkedAccounts.find(a => a.username === data.username)) {
+                    } else if (linkedAccounts.find(a => a.username === targetData.username)) {
                         errorMsg.textContent = "This account is already linked.";
                         errorMsg.classList.remove('hidden');
                     } else {
-                        // Success - Add to linked array
-                        linkedAccounts.push({
+                        // Success - Create linked object
+                        const newLinkedAcc = {
                             id: validDoc.id,
-                            username: data.username,
-                            fullName: data.fullName || data.firstName || data.username,
-                            password: data.password,
-                            schoolName: data.schoolName,
-                            userImageId: data.photoId || data.userImageId || ''
-                        });
+                            username: targetData.username,
+                            fullName: targetData.fullName || targetData.firstName || targetData.username,
+                            password: targetData.password,
+                            schoolName: targetData.schoolName,
+                            userImageId: targetData.photoId || targetData.userImageId || ''
+                        };
+
+                        // Add to current user's linkedAccounts
+                        linkedAccounts.push(newLinkedAcc);
+                        currentUser.linkedAccounts = linkedAccounts;
                         
-                        localStorage.setItem('EDUZ_LINKED_ACCOUNTS', JSON.stringify(linkedAccounts));
+                        // Update current user in Firestore
+                        await window.fbUpdateDoc(window.fbDoc(window.firebaseDB, "users", currentUser.id), {
+                            linkedAccounts: linkedAccounts
+                        });
+
+                        // Bi-directional Link: Add current user to target user's linkedAccounts in Firestore
+                        let targetLinked = targetData.linkedAccounts || [];
+                        if (!targetLinked.find(a => a.username === currentUser.username)) {
+                            targetLinked.push({
+                                id: currentUser.id,
+                                username: currentUser.username,
+                                fullName: currentUser.fullName,
+                                password: currentUser.password,
+                                schoolName: currentUser.schoolName,
+                                userImageId: currentUser.userImageId || ''
+                            });
+                            await window.fbUpdateDoc(window.fbDoc(window.firebaseDB, "users", validDoc.id), {
+                                linkedAccounts: targetLinked
+                            });
+                        }
+                        
                         document.getElementById('linkedAccountsCountBadge').textContent = linkedAccounts.length;
                         document.getElementById('linkedAccountsCountBadge').classList.remove('hidden');
                         
@@ -1730,33 +1798,37 @@
             stopSilentPolling();
             
             try {
-                // Fetch full data for target user
                 const usersRef = window.fbCollection(window.firebaseDB, "users");
                 const q = window.fbQuery(usersRef, window.fbWhere("username", "==", targetAcc.username), window.fbLimit(1));
                 const snap = await window.fbGetDocs(q);
                 
                 if (!snap.empty) {
                     const docItem = snap.docs[0];
+                    const docData = docItem.data();
                     const sig = await getDeviceSignature();
                     
-                    // Update device ID for new active user
                     await window.fbUpdateDoc(window.fbDoc(window.firebaseDB, "users", docItem.id), { deviceId: sig });
                     
-                    currentUser = { id: docItem.id, ...docItem.data(), deviceId: sig };
+                    currentUser = { id: docItem.id, ...docData, deviceId: sig };
                     if (typeof currentUser.allowedButtons === 'string') {
                         currentUser.allowedButtons = currentUser.allowedButtons.split(',').map(s=>s.trim());
                     }
                     
+                    // Update linked accounts dynamically from target user's DB
+                    if (docData.linkedAccounts && Array.isArray(docData.linkedAccounts)) {
+                        linkedAccounts = docData.linkedAccounts;
+                    } else {
+                        // Fallback (shouldn't happen due to bi-directional linking)
+                        linkedAccounts = [targetAcc]; 
+                    }
+                    
                     localStorage.setItem('EDUZ_SAVED_USER', JSON.stringify(currentUser));
                     
-                    // Full UI Reset & Re-init
                     document.getElementById('frame1').src = "about:blank";
                     document.getElementById('frame2').src = "about:blank";
                     activeItems = { 1: null, 2: null }; 
                     
                     initDashboard();
-                    
-                    // التعديل: إجبار النظام على العودة للصفحة الرئيسية دائماً عند تبديل الحساب
                     goToHomePage();
                     
                 } else {
